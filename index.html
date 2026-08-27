@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRA Payload Tool</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#fff; --ink:#1f2733; --muted:#6b7685; --line:#dfe4ec;
+    --brand:#1f4e79; --brand2:#2e75b6; --req:#1a6b2f; --res:#843c0c;
+    --green:#70AD47; --yellow:#FFD700; --orange:#FF7000; --red:#C00000;
+    --approve-bg:#C6EFCE; --approve-fg:#276221; --reject-bg:#FFC7CE; --reject-fg:#9C0006;
+    --cond-bg:#FFF2CC; --cond-fg:#7f6000;
+    --radius:10px; --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Tahoma,"Sarabun",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+  header{background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff;padding:16px 22px;box-shadow:var(--shadow)}
+  header h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.2px}
+  header p{margin:3px 0 0;font-size:12.5px;opacity:.85}
+  .wrap{max-width:1220px;margin:0 auto;padding:18px}
+  .tabs{display:flex;gap:6px;margin:16px 0 4px}
+  .tab{padding:9px 20px;border:1px solid var(--line);background:var(--card);border-radius:999px;cursor:pointer;font-weight:600;color:var(--muted);user-select:none}
+  .tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .panel{display:none}
+  .panel.active{display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:16px}
+  .card h2{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:var(--brand2);border-bottom:2px solid var(--line);padding-bottom:7px}
+  textarea{width:100%;min-height:150px;font-family:"Cascadia Code",Consolas,monospace;font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:11px;resize:vertical;background:#fbfcfe;color:var(--ink)}
+  textarea:focus,input:focus,select:focus{outline:2px solid var(--brand2);outline-offset:-1px}
+  button{cursor:pointer;border:none;border-radius:8px;padding:9px 18px;font-weight:600;font-size:13.5px;font-family:inherit}
+  .btn-primary{background:var(--brand);color:#fff}
+  .btn-primary:hover{background:#163a5c}
+  .btn-ghost{background:#eef2f7;color:var(--ink)}
+  .btn-ghost:hover{background:#e2e8f0}
+  .btn-copy{background:var(--green);color:#fff}
+  .btn-copy:hover{filter:brightness(.94)}
+  .btnrow{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:11px}
+  .err{background:var(--reject-bg);color:var(--reject-fg);border:1px solid #f1a9b0;border-radius:8px;padding:9px 12px;margin-top:10px;font-weight:600;display:none}
+  .err.show{display:block}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:900px){.grid2{grid-template-columns:1fr}}
+  table.kv{width:100%;border-collapse:collapse}
+  table.kv td{padding:5px 8px;border-bottom:1px solid #eef1f5;vertical-align:top}
+  table.kv td.k{color:var(--muted);width:42%;font-weight:600}
+  table.kv td.v{font-family:"Cascadia Code",Consolas,monospace;word-break:break-word}
+  .badge{display:inline-block;padding:3px 12px;border-radius:999px;font-weight:700;font-size:13px}
+  .risk-cell{display:inline-block;min-width:64px;text-align:center;padding:3px 10px;border-radius:6px;font-weight:700;font-size:12.5px}
+  .riskgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .riskbox{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fbfcfe}
+  .riskbox .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+  .scorecards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+  .scorebox{border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;background:linear-gradient(180deg,#fff,#f7f9fc)}
+  .scorebox .n{font-size:24px;font-weight:800;color:var(--brand)}
+  .scorebox .l{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .fields{display:grid;grid-template-columns:repeat(2,1fr);gap:11px 16px}
+  @media(max-width:700px){.fields{grid-template-columns:1fr}.scorecards{grid-template-columns:1fr}}
+  .field{display:flex;flex-direction:column;gap:3px}
+  .field label{font-size:12px;font-weight:600;color:var(--muted)}
+  .field .hint{font-size:10.5px;color:#9aa4b1;font-weight:400}
+  input,select{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:13.5px;font-family:inherit;background:#fbfcfe;color:var(--ink)}
+  .fivec{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+  .fivec .grp{border:1px solid var(--line);border-radius:9px;padding:11px 12px}
+  .fivec .grp h4{margin:0 0 9px;font-size:12.5px;color:var(--req);border-bottom:1px dashed var(--line);padding-bottom:5px}
+  .fivec .row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .fivec .row label{font-size:12px;color:var(--muted)}
+  .fivec .row input{width:66px;text-align:center;padding:5px}
+  .urlbox{background:#0d2438;color:#8fd3ff;font-family:"Cascadia Code",Consolas,monospace;font-size:12px;padding:10px 12px;border-radius:8px;word-break:break-all;margin-top:6px}
+  .modchip{display:inline-block;background:var(--brand2);color:#fff;padding:2px 10px;border-radius:6px;font-family:monospace;font-size:12px;font-weight:700}
+  details.raw{margin-top:12px}
+  details.raw summary{cursor:pointer;font-weight:600;color:var(--brand2);font-size:12.5px}
+  table.full{width:100%;border-collapse:collapse;margin-top:9px;font-size:11.5px}
+  table.full td,table.full th{border:1px solid #e6eaf0;padding:3px 7px;text-align:left}
+  table.full th{background:#f0f3f8;position:sticky;top:0}
+  .full-wrap{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+  .note{background:#fff8e6;border:1px solid #ffe1a3;color:#7a5b00;border-radius:8px;padding:8px 11px;font-size:12.5px;margin-top:10px}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#1f2733;color:#fff;padding:11px 22px;border-radius:999px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;box-shadow:var(--shadow);z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .out-json{min-height:270px}
+  .muted-small{font-size:11.5px;color:var(--muted);margin-top:4px}
+  .seg-flag{font-size:11.5px;color:var(--muted)}
+  .switch{display:flex;gap:7px;align-items:center;font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏦 CRA Payload Tool <span style="font-weight:400;font-size:14px;opacity:.8">— SME Credit Scoring</span></h1>
+  <p>อ่าน payload ให้เข้าใจง่าย · สร้าง payload ที่ยิงได้จริงจากฟอร์ม · คัดลอกได้ในคลิกเดียว</p>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <div class="tab active" data-tab="reader">📖 อ่าน payload</div>
+    <div class="tab" data-tab="builder">🛠️ สร้าง payload</div>
+  </div>
+
+  <!-- ============ READER ============ -->
+  <div class="panel active" id="panel-reader">
+    <div class="card">
+      <h2>วาง payload / log</h2>
+      <textarea id="readerInput" placeholder="วางได้ทั้ง: ไฟล์ .log เต็ม (มี ***REQUEST*** / ***RESPONSE***), หรือ request JSON เดี่ยว, หรือ response JSON เดี่ยว — ระบบตรวจชนิดให้อัตโนมัติ"></textarea>
+      <div class="btnrow">
+        <button class="btn-primary" id="btnParse">แปลง / อ่าน</button>
+        <button class="btn-ghost" id="btnClearReader">ล้าง</button>
+        <button class="btn-ghost" id="btnSample">ใส่ตัวอย่าง</button>
+      </div>
+      <div class="err" id="readerErr"></div>
+    </div>
+    <div id="readerOut"></div>
+  </div>
+
+  <!-- ============ BUILDER ============ -->
+  <div class="panel" id="panel-builder">
+    <div class="card">
+      <h2>เลือกประเภทเคส</h2>
+      <div class="fields" style="grid-template-columns:repeat(3,1fr)">
+        <div class="field">
+          <label>Segment</label>
+          <select id="bSegment"></select>
+        </div>
+        <div class="field">
+          <label>Application Type</label>
+          <select id="bAppType"></select>
+        </div>
+        <div class="field">
+          <label>Module (คำนวณอัตโนมัติ)</label>
+          <div style="padding-top:7px"><span class="modchip" id="bModule">—</span></div>
+        </div>
+      </div>
+      <div class="urlbox" id="bUrl">—</div>
+      <div class="btnrow">
+        <button class="btn-copy" id="btnCopyUrl">📋 คัดลอก URL</button>
+        <span class="seg-flag" id="bFlag"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>ฟิลด์สำคัญ</h2>
+      <div class="fields" id="bKeyFields"></div>
+    </div>
+
+    <div class="card" id="b5cCard">
+      <h2>คะแนน 5C (Qualitative)</h2>
+      <div class="fivec" id="b5c"></div>
+    </div>
+
+    <div class="card">
+      <h2>ผลลัพธ์ payload</h2>
+      <div class="btnrow" style="margin:0 0 10px">
+        <button class="btn-primary" id="btnBuild">สร้าง payload</button>
+        <label class="switch"><input type="checkbox" id="bMinify"> minify (บรรทัดเดียว)</label>
+      </div>
+      <textarea class="out-json" id="bOutput" placeholder="กด &quot;สร้าง payload&quot; แล้ว JSON ที่ยิงได้จริงจะปรากฏที่นี่"></textarea>
+      <div class="btnrow">
+        <button class="btn-copy" id="btnCopyPayload">📋 คัดลอก payload</button>
+        <span class="muted-small" id="bSize"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">คัดลอกแล้ว</div>
+
+<script>
+const BASE_TEMPLATES = {"MICRO|CA1": {"inputs": [{"name": "RegisNo_", "value": "500075131"}, {"name": "Segment_", "value": "MICRO"}, {"name": "ApplicationType_", "value": "CA1"}, {"name": "CusType_", "value": "2"}, {"name": "NCBScore_", "value": 825}, {"name": "NCBScoreGrade_", "value": "AA"}, {"name": "CustomerInstallment_", "value": 3300}, {"name": "CustomerIndustryType_", "value": "C"}, {"name": "CustomerObjCodeDetail_", "value": "เงินทุนหมุนเวียน"}, {"name": "CustomerTermYear_", "value": 7}, {"name": "CustomerICR_", "value": 0}, {"name": "CustomerDSCR_", "value": 5.58}, {"name": "AF_Quantitative_", "value": [{"metadata": [{"ApplNo": "string"}, {"TransDate": "string"}, {"RegisName": "string"}, {"Registered": "string"}, {"IDCard": "string"}, {"CompanyAddress": "string"}, {"ComTitle": "string"}, {"ComName": "string"}, {"ComAddrNo": "string"}, {"ComBuild": "string"}, {"ComFloor": "string"}, {"ComMoo": "string"}, {"ComVillage": "string"}, {"ComSoi": "string"}, {"ComStreet": "string"}, {"ComDistric": "string"}, {"ComAmphur": "string"}, {"ComProvCode": "string"}, {"ComProvName": "string"}, {"ComFax": "string"}, {"ComDistricCode": "string"}, {"ComZip": "string"}, {"FirmName": "string"}, {"ContactPhon": "string"}, {"ContactMobile": "string"}, {"RegisAmount": "decimal"}, {"RegisPayAmt": "decimal"}, {"BussRegisNo": "string"}, {"BussRegisDate": "string"}, {"ISICCode_SME": "string"}, {"ISICCode_SMEName": "string"}, {"ISICCode_SME_PMScore": "integer"}, {"PM_Score": "integer"}, {"PM_Grade": "string"}, {"PM_ScoreDate": "string"}, {"ExeclutiveExperienceYY": "integer"}, {"ExeclutiveExperienceMM": "integer"}, {"ExeclutiveExperienceBussRegisYY": "integer"}, {"ExeclutiveExperienceBussRegisMM": "integer"}, {"IncomePerYear": "decimal"}, {"IncomeFromOperationPerYear": "decimal"}, {"isCheckedPurchaseCashFlag": "decimal"}, {"PurchaseCashFlag": "string"}, {"PurchaseCashPercentage": "decimal"}, {"isCheckedPurchaseCreditFlag": "decimal"}, {"PurchaseCreditFlag": "string"}, {"PurchaseCreditPercentage": "decimal"}, {"PurchaseCreditDays": "integer"}, {"isCheckedSaleCashFlag": "decimal"}, {"SaleCashFlag": "string"}, {"SaleCashPercentage": "decimal"}, {"isCheckedSaleCreditFlag": "decimal"}, {"SaleCreditFlag": "string"}, {"SaleCreditPercentage": "decimal"}, {"SaleCreditDays": "integer"}, {"CashAndDepositAtInterview": "decimal"}, {"InventoryStockAtInterview": "decimal"}, {"DebtInYearInterview": "decimal"}, {"ProjectTypeCode": "string"}, {"ProjectTypeName": "string"}, {"LoanTypeCode": "string"}, {"LoanTypeName": "string"}, {"ObjCode": "string"}, {"ObjCodeDetail": "string"}, {"ObjCodeOther": "string"}, {"Limit": "decimal"}, {"IntPerYear": "decimal"}, {"Rate": "decimal"}, {"Installment": "decimal"}, {"GracePeriod": "integer"}, {"TermYear": "integer"}, {"TermMonth": "integer"}, {"LimitTerm": "integer"}, {"TotalApprovedLimitAmt": "decimal"}, {"Outstanding": "decimal"}, {"TotalOutstanding": "decimal"}, {"ICR": "decimal"}, {"DSCR": "decimal"}, {"isCheckedNCBFlag": "decimal"}, {"NCBFlag": "string"}, {"NCBYear": "integer"}, {"NCBSearchDate": "string"}, {"NCBOverDue12MFlag": "string"}, {"NCBOverDue12M": "integer"}, {"NCBRESFlag": "string"}, {"NCBCommitteeFlag": "string"}, {"NCBTotalLimitAmt": "decimal"}, {"NCBTotalOutstanding": "decimal"}, {"NCBTotalInstallment": "decimal"}, {"RiskResult": "string"}, {"RiskCondition": "string"}, {"RiskCapital": "string"}, {"RiskCapacity": "string"}, {"RiskCharacter": "string"}, {"RiskCollateral": "string"}, {"SummaryComment": "string"}, {"isCheckedSendApprFlag": "decimal"}, {"SendApprFlag": "string"}, {"SendApprDate": "string"}, {"PrintDate": "string"}, {"ReprintRem": "string"}, {"DeptCodePreScreeningCode": "string"}, {"DeptCodePreScreeningName": "string"}, {"AOCode": "string"}, {"AOName": "string"}, {"AOCodeComment": "string"}, {"AOApproveFlag": "string"}, {"AOApproveDate": "string"}, {"AOApproveCode": "string"}, {"AOApproveName": "string"}, {"AOApproveComment": "string"}, {"Inputter": "string"}, {"RejectReasonCode": "string"}, {"RejectReasonName": "string"}, {"ReturnReasonDetail": "string"}, {"AoAnalystComment": "string"}, {"Guarantors": "string"}, {"RegisNoCoNames": "string"}, {"SubmitCRACount": "integer"}, {"SubmitCRAResult": "string"}, {"LimitCA": "decimal"}, {"IntTypeRate": "string"}, {"isCheckedSendCOApprFlag": "decimal"}, {"SendCOApprFlag": "string"}, {"SendCOApprDate": "string"}, {"FS_INC_RO_Income": "decimal"}, {"FS_INC_RO_IncomePercentage": "decimal"}, {"FS_INC_RO_GrossProfitMargin": "decimal"}, {"FS_INC_RO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_RO_SaleAndAdminExpense": "decimal"}, {"FS_INC_RO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_RO_FinancialCost": "decimal"}, {"FS_INC_RO_FinancialCostPercentage": "decimal"}, {"FS_INC_RO_DebtPayment": "decimal"}, {"FS_INC_RO_Balance": "decimal"}, {"FS_INC_CO_Income": "decimal"}, {"FS_INC_CO_IncomePercentage": "decimal"}, {"FS_INC_CO_IncomeReason": "string"}, {"FS_INC_CO_GrossProfitMargin": "decimal"}, {"FS_INC_CO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_CO_GrossProfitMarginReason": "string"}, {"FS_INC_CO_SaleAndAdminExpense": "decimal"}, {"FS_INC_CO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_CO_SaleAndAdminExpenseReason": "string"}, {"FS_INC_CO_FinancialCost": "decimal"}, {"FS_INC_CO_FinancialCostPercentage": "decimal"}, {"FS_INC_CO_FinancialCostReason": "string"}, {"FS_INC_CO_DebtPayment": "decimal"}, {"FS_INC_CO_DebtPaymentReason": "string"}, {"FS_INC_CO_Balance": "decimal"}, {"COCode": "string"}, {"COName": "string"}, {"CODate": "string"}, {"COComment": "string"}, {"CMFlag": "string"}, {"CMCode": "string"}, {"CMName": "string"}, {"CMDate": "string"}, {"CMComment": "string"}, {"RiskDate": "string"}, {"RiskBusiness": "string"}, {"RiskLimit": "decimal"}, {"RiskOutstanding": "decimal"}, {"RiskNPL": "decimal"}, {"RiskNPLOUT": "decimal"}, {"RiskCeiling": "decimal"}, {"RiskLimitNonFL": "decimal"}, {"RiskAddLimitAble": "decimal"}, {"ReturnReasonCode": "integer"}, {"ReturnReasonName": "string"}, {"RejectRem": "string"}, {"DeptAnalystFirstCode": "string"}, {"DeptAnalystFirstName": "string"}, {"DDObj": "string"}, {"ConditionContract": "string"}, {"ConditionDrawDown": "string"}, {"CollateralTCG": "string"}, {"CollateralGur": "string"}, {"PNDays": "integer"}, {"FEEDetail": "string"}, {"AuthorizeDate": "string"}, {"AuthorizeCode": "string"}, {"ScheduleRate": "string"}, {"AF_IndustryType": "string"}]}, {"data": [["AP69000014458", "2026-03-25", "ไทย ดับเบิ้ลเอส", "Y", "0105562148632", "133/184 ถนนหทัยราษฎร์", "", "33a2da938d02234b438c8992b257e0a02281c11f60542499b7d8161f4e7e2e42cb42893de58654ba27e028e0d7c74169c21c606058c9e5e4d9b6cc83aaad8ca488b93fa3948adf22ed936e79f3e2a9424d6e16d7d647d9ab1009d41619970c4e6c28fe790e24cede457091ffbee5d78a73107a13ff460f3b0cbaeb1e4fd1be3b72bbfb751a3299e521ce3bacd6a254010c13a8cc800b78ffdccc3158d3d3df8036be8911cdfccbc37b5206348438021f", "", "", "", "", "", "", "", "มีนบุรี", "มีนบุรี", "01", "กรุงเทพมหานคร", "", "101001", "10510", "b6c744facce22f1ed112a4fdbb38deefb8cfd165fa4aa550df3b2f81d0613b350bb16c3a724ed9031b5479c6a37de5d6aeb14ec3b991d18fbecea845603c29cd7c8a74a9bb81ccbda53372f85f05215bc2d9e311c08dc21ca54f6cc7afae422604cab359f21377fd0931312e1574828c65c0f34d984736b835ae0a20a65a354c320f553436d573b70d7ff7b050a361021a92aa10cfa47cd01f283559f777bbf5f059ea4f54898959b36ee8d77621126b", "", "0942542659", 1000000, 300000, "", "2019-08-29", "C325010", "การผลิตเครื่องมือและอุปกรณ์ในทางการแพทย์", 4, 0, null, null, 0, 0, 6, 6, 1095669.02, 1052635.55, 1, "Y", 100, 0, "", 0, 0, 0, "", 0, 1, "Y", 100, 30, 0, 0, 0, "P21204-003", "ปรับปรุงหลักเกณฑ์โครงการสินเชื่อปลุกพลัง SME", "01", "Fixed Loan", "6", "เงินทุนหมุนเวียน", "", 200000, 0, 9.3, 3300, 0, 7, 0, 84, 0, 0, 200000, 0, 5.58, 1, "Y", 2, "2026-03-12", "NO", 0, "N", "N", 0, 0, 0, null, null, null, null, null, null, "", 0, null, null, null, null, "2012", "สาขาลาดกระบัง", "", "", "", "", "", "", "", "", null, null, null, null, "", null, null, 0, null, 0, null, 0, null, null, 1095669.02, 100, 422051.71, 38.52, 184971.73, 16.88, 0, 0, 0, 197479.98, 0, 0, null, 0, 0, null, 0, 0, null, 0, 0, null, 0, null, 0, null, null, null, null, null, null, null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, null, null, null, null, null, null, 0, null, null, null, null, "C"]]}]}]}, "MICRO|CA2": {"inputs": [{"name": "RegisNo_", "value": "600308856"}, {"name": "Segment_", "value": "MICRO"}, {"name": "ApplicationType_", "value": "CA2"}, {"name": "CusType_", "value": "1"}, {"name": "NCBScore_", "value": 650}, {"name": "NCBScoreGrade_", "value": "FF"}, {"name": "CustomerInstallment_", "value": 3100}, {"name": "CustomerIndustryType_", "value": "G"}, {"name": "CustomerObjCodeDetail_", "value": "เงินทุนหมุนเวียน"}, {"name": "CustomerTermYear_", "value": 7}, {"name": "CustomerICR_", "value": 0}, {"name": "CustomerDSCR_", "value": 1.26}, {"name": "AF_Quantitative_", "value": [{"metadata": [{"ApplNo": "string"}, {"TransDate": "string"}, {"RegisName": "string"}, {"Registered": "string"}, {"IDCard": "string"}, {"CompanyAddress": "string"}, {"ComTitle": "string"}, {"ComName": "string"}, {"ComAddrNo": "string"}, {"ComBuild": "string"}, {"ComFloor": "string"}, {"ComMoo": "string"}, {"ComVillage": "string"}, {"ComSoi": "string"}, {"ComStreet": "string"}, {"ComDistric": "string"}, {"ComAmphur": "string"}, {"ComProvCode": "string"}, {"ComProvName": "string"}, {"ComFax": "string"}, {"ComDistricCode": "string"}, {"ComZip": "string"}, {"FirmName": "string"}, {"ContactPhon": "string"}, {"ContactMobile": "string"}, {"RegisAmount": "decimal"}, {"RegisPayAmt": "decimal"}, {"BussRegisNo": "string"}, {"BussRegisDate": "string"}, {"ISICCode_SME": "string"}, {"ISICCode_SMEName": "string"}, {"ISICCode_SME_PMScore": "integer"}, {"PM_Score": "integer"}, {"PM_Grade": "string"}, {"PM_ScoreDate": "string"}, {"ExeclutiveExperienceYY": "integer"}, {"ExeclutiveExperienceMM": "integer"}, {"ExeclutiveExperienceBussRegisYY": "integer"}, {"ExeclutiveExperienceBussRegisMM": "integer"}, {"IncomePerYear": "decimal"}, {"IncomeFromOperationPerYear": "decimal"}, {"isCheckedPurchaseCashFlag": "decimal"}, {"PurchaseCashFlag": "string"}, {"PurchaseCashPercentage": "decimal"}, {"isCheckedPurchaseCreditFlag": "decimal"}, {"PurchaseCreditFlag": "string"}, {"PurchaseCreditPercentage": "decimal"}, {"PurchaseCreditDays": "integer"}, {"isCheckedSaleCashFlag": "decimal"}, {"SaleCashFlag": "string"}, {"SaleCashPercentage": "decimal"}, {"isCheckedSaleCreditFlag": "decimal"}, {"SaleCreditFlag": "string"}, {"SaleCreditPercentage": "decimal"}, {"SaleCreditDays": "integer"}, {"CashAndDepositAtInterview": "decimal"}, {"InventoryStockAtInterview": "decimal"}, {"DebtInYearInterview": "decimal"}, {"ProjectTypeCode": "string"}, {"ProjectTypeName": "string"}, {"LoanTypeCode": "string"}, {"LoanTypeName": "string"}, {"ObjCode": "string"}, {"ObjCodeDetail": "string"}, {"ObjCodeOther": "string"}, {"Limit": "decimal"}, {"IntPerYear": "decimal"}, {"Rate": "decimal"}, {"Installment": "decimal"}, {"GracePeriod": "integer"}, {"TermYear": "integer"}, {"TermMonth": "integer"}, {"LimitTerm": "integer"}, {"TotalApprovedLimitAmt": "decimal"}, {"Outstanding": "decimal"}, {"TotalOutstanding": "decimal"}, {"ICR": "decimal"}, {"DSCR": "decimal"}, {"isCheckedNCBFlag": "decimal"}, {"NCBFlag": "string"}, {"NCBYear": "integer"}, {"NCBSearchDate": "string"}, {"NCBOverDue12MFlag": "string"}, {"NCBOverDue12M": "integer"}, {"NCBRESFlag": "string"}, {"NCBCommitteeFlag": "string"}, {"NCBTotalLimitAmt": "decimal"}, {"NCBTotalOutstanding": "decimal"}, {"NCBTotalInstallment": "decimal"}, {"RiskResult": "string"}, {"RiskCondition": "string"}, {"RiskCapital": "string"}, {"RiskCapacity": "string"}, {"RiskCharacter": "string"}, {"RiskCollateral": "string"}, {"SummaryComment": "string"}, {"isCheckedSendApprFlag": "decimal"}, {"SendApprFlag": "string"}, {"SendApprDate": "string"}, {"PrintDate": "string"}, {"ReprintRem": "string"}, {"DeptCodePreScreeningCode": "string"}, {"DeptCodePreScreeningName": "string"}, {"AOCode": "string"}, {"AOName": "string"}, {"AOCodeComment": "string"}, {"AOApproveFlag": "string"}, {"AOApproveDate": "string"}, {"AOApproveCode": "string"}, {"AOApproveName": "string"}, {"AOApproveComment": "string"}, {"Inputter": "string"}, {"RejectReasonCode": "string"}, {"RejectReasonName": "string"}, {"ReturnReasonDetail": "string"}, {"AoAnalystComment": "string"}, {"Guarantors": "string"}, {"RegisNoCoNames": "string"}, {"SubmitCRACount": "integer"}, {"SubmitCRAResult": "string"}, {"LimitCA": "decimal"}, {"IntTypeRate": "string"}, {"isCheckedSendCOApprFlag": "decimal"}, {"SendCOApprFlag": "string"}, {"SendCOApprDate": "string"}, {"FS_INC_RO_Income": "decimal"}, {"FS_INC_RO_IncomePercentage": "decimal"}, {"FS_INC_RO_GrossProfitMargin": "decimal"}, {"FS_INC_RO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_RO_SaleAndAdminExpense": "decimal"}, {"FS_INC_RO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_RO_FinancialCost": "decimal"}, {"FS_INC_RO_FinancialCostPercentage": "decimal"}, {"FS_INC_RO_DebtPayment": "decimal"}, {"FS_INC_RO_Balance": "decimal"}, {"FS_INC_CO_Income": "decimal"}, {"FS_INC_CO_IncomePercentage": "decimal"}, {"FS_INC_CO_IncomeReason": "string"}, {"FS_INC_CO_GrossProfitMargin": "decimal"}, {"FS_INC_CO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_CO_GrossProfitMarginReason": "string"}, {"FS_INC_CO_SaleAndAdminExpense": "decimal"}, {"FS_INC_CO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_CO_SaleAndAdminExpenseReason": "string"}, {"FS_INC_CO_FinancialCost": "decimal"}, {"FS_INC_CO_FinancialCostPercentage": "decimal"}, {"FS_INC_CO_FinancialCostReason": "string"}, {"FS_INC_CO_DebtPayment": "decimal"}, {"FS_INC_CO_DebtPaymentReason": "string"}, {"FS_INC_CO_Balance": "decimal"}, {"COCode": "string"}, {"COName": "string"}, {"CODate": "string"}, {"COComment": "string"}, {"CMFlag": "string"}, {"CMCode": "string"}, {"CMName": "string"}, {"CMDate": "string"}, {"CMComment": "string"}, {"RiskDate": "string"}, {"RiskBusiness": "string"}, {"RiskLimit": "decimal"}, {"RiskOutstanding": "decimal"}, {"RiskNPL": "decimal"}, {"RiskNPLOUT": "decimal"}, {"RiskCeiling": "decimal"}, {"RiskLimitNonFL": "decimal"}, {"RiskAddLimitAble": "decimal"}, {"ReturnReasonCode": "integer"}, {"ReturnReasonName": "string"}, {"RejectRem": "string"}, {"DeptAnalystFirstCode": "string"}, {"DeptAnalystFirstName": "string"}, {"DDObj": "string"}, {"ConditionContract": "string"}, {"ConditionDrawDown": "string"}, {"CollateralTCG": "string"}, {"CollateralGur": "string"}, {"PNDays": "integer"}, {"FEEDetail": "string"}, {"AuthorizeDate": "string"}, {"AuthorizeCode": "string"}, {"ScheduleRate": "string"}, {"AF_IndustryType": "string"}]}, {"data": [["AP68000055230", "2025-12-23", "สถาพร  โกศล", "", "1329900735477", "31 ม.5 บ.ทำเนียบ", "", "543a4edb41f6a10627885f5f96c157d251218728cbeab56d5e96aacf0abf493c7f1b416b5570340ba7b1a4780c9b648604f38d8bb3de86eca0719a08553f50a13a86311a78bb80037ea5ac36b4cf6fa7d450c5b03ba82ddd4781ff5a81c7864eff266b8d3a4680395b1877f3cdb5495b070ecf4c56f8e9e03e0e098858964e40a2c94df9be0ea234b26cced219850f074c904bdae475a89cc2ba073fc489b2cebdb339479f902efc9781ce836e03a73e", "", "", "", "", "", "", "", "ช่างปี่", "ศีขรภูมิ", "40", "สุรินทร์", "", "320910", "32110", "a91b542cf100dd945d2b7575b3acbccb9dbf35cfed3aa56667d884d204ce81968cc946f5f3d0af2b2c549e27c9c89424f9d3f88ef6f7c38e279a8fa3733aba97db35e1276c9d3fdc05c7b7fb6ead6c267ea8fe6aae045a14a3d6cafe4567e94d0b32493dbab40dfbcbcc49e36d7ecf3434a95eb4c1972008b2bfca2dae1d30340fc0a61d4140394feea37c9f919d2206f6112a8b0b20e924df8a344ed92655638b6a3cb520a4f2444393b5b6605d280c", "", "0656321613", 0, 0, "", "2023-06-02", "G472150", "ร้านขายปลีกผลิตภัณฑ์ขนมอบ", 3, 0, null, null, 2, 6, 2, 6, 1586195, 1586195, 1, "Y", 100, 0, "", 0, 0, 1, "Y", 100, 0, "", 0, 0, 100000, 62450, 0, "P21204", "ปรับปรุงหลักเกณฑ์โครงการสินเชื่อปลุกพลัง SME", "01", "Fixed Loan", "6", "เงินทุนหมุนเวียน", "", 300000, 0, 7.76, 3100, 0, 7, 0, 84, 0, 0, 200000, 0, 1.26, 1, "Y", 1, "2025-12-17", "NO", 0, "N", "Y", 778357, 619168, 19940, null, null, null, null, null, null, "ผู้กู้ นายสถาพร โกศล และนางปวีณา ประภาสัย ประกอบกิจผลิตและจำหน่ายโดนัท และเบเกอรี่ จดทะเบียนพาณิชย์เลขที่ 1329900735477 วันที่ 2 มิ.ย. 2566 ภายใต้ร้าน \"แสนหวาน โดนัทแอนด์เบเกอรี่ \" ก่อตั้งและบริหารกิจการโดยนายสถาพร โกศล และนางปวีณา ประภาสัย (สมรสไม่จดทะเบียน) ผู้กู้หลักจบปี61 การศึกษาระดับสูงสุด ปวส. สาขาช่างยนต์ วิทยาลัยเทคนิคสุรินทร์ ปัจจุบันอายุ 28 ปี ในปี62-66 เป็นพนักงานประจำ บจก.สยามคูโบต้า นิคมอมตะ จ.ชลบุรี ส่วนผู้กู้ร่วม จบการศึกษาปริญญาตรี การบัญชี มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขตสุรินทร์ หลังจบการศึกษาทำงานประจำ บจก.ยูเนียน แอนด์ โอจิ อินเอร์แพ็ค และทั้งคู่ย้ายกับภูมิลำเนา ด้วยความชอบกินโดนัทของผู้กู้หลัก จึงไปเรียนและลองทำขายจนเป็นที่นิยม จึงตัดสินใจเปิดกิจการจำหน่ายเบเกอรี่ โดนัท ขนมอบกรอบ โดยทำเองและสั่งซื้อมาจำหน่ายเพิ่ม ตั้งแต่ในปี2566-ปัจจุบัน ที่ตั้งร้าน เลขที่ 31 หมู่ที่ 5 บ้านทำเนียบ จ.ช่างปี่ อ.ศีขรภูมิ จ.สุรินทร์ 32110 กรรมสิทธิ์ของนายนิยม ประภาสัย (บิดา น.ส.ปวีณา ประภาสัย) ลงนามให้ความยินยอมให้ใช้เป็นที่ตั้งร้าน ลว. 17 ธ.ค. 68 และจำหน่ายตามงานเทศกาลต่างๆ และตลาดประจำอำเภอศีขรภูมิ จ.สุรินทร์ กลุ่มลูกค้าของกิจการประชาชนทั่วไปหนังสือรับรองการขึ้นทะเบียนผู้ประกอบการวิสาหกิจขนาดกลางและขนาดย่อม (SME)ในนามคุณสถาพร โกศล ในนามร้านแสนหวานนัทแอนด์เบเกอร์รี่ มีผลบังคับครั้งแรก วันที่ 20 ธ.ค. 2568 จนถึงวันที่ 30 มิ.ย. 2569 เช็คระบบ XIGNAL ไม่พบผู้กู้ทั้ง 2 ท่าน จัดตั้งบริษัทหรือถือหุ้นในบริษัทอื่นตามและไม่พบประวัติติดต่อ ธพว. ,ไม่พบประวัติล้มลายขายทอดตลาด การตรวจข้อมูล Watch List ระบบ CBS ประวัติการติดต่อสถาบันการเงินชำระหนี้ปกติ ผู้กู้เป็นไปตามคุณสมบัติตาม ปรับปรุงหลักเกณฑ์โครงการสินเชื่อปลุกพลัง SME ตามคำสั่ง ธพว. ที่ 182/2568\r\nผลประเมินความเสี่ยงลูกค้า (CRA) APPROVE (A1) นำเสนออนุมัติวงเงินกู้ระยะยาว (F/L) ปรับปรุงหลักเกณฑ์โครงการสินเชื่อปลุกพลัง SME ตามคำสั่ง ธพว. 182/2568 จำนวน 200,000 บาท วัตถุประสงค์เพื่อหมุนเวียนในกิจการ โดยระยะเวลากู้ 7 ปี โดยปีที่ 1-3 คงที่ 3.00% ต่อปี ,ปีที่ 4-7 =MRR+4.00% ต่อปี (ปัจจุบัน MRR = 7.325%) ผ่อนชำระดอกเบี้ยพร้อมเงินต้นทุกเดือนไม่ต่ำกว่า  3,100 บาท หลักประกันในครั้งนี้ คือ บสย. ค้ำประกันเต็มวงเงินกู้ ซึ่งการพิจารณาในครั้งนี้เป็นไปตามปรับปรุงหลักเกณฑ์โครงการสินเชื่อปลุกพลัง SME ตามคำสั่ง ธพว. 182/2568 และคำสั่ง ธพว. ที่ 129/2568 หลักเกณฑ์การอำนวยสินเชื่อ และอำนาจอนุมัติ ,\r\nเงื่อนไขอื่น : ให้ผู้กู้เข้ารับการพัฒนาผ่านแฟลตฟอร์ม DX อย่างน้อยปีละ 1 ครั้ง โดยในปีแรกก่อนการเบิกจ่ายเงินกู้ ให้ผู้กู้ดำเนินการทำแบบประเมินตนเองบนแฟลตฟอร์ม DX และเลือกเรียนรู้หลักสูตร E-Learning อย่างน้อย 1 หลักสูตร หรือ เข้าร่วมกิจกรรมการพัฒนาผู้ประกอบการอย่างน้อย 1 ครั้ง \r\nเงื่อนไขการเบิกจ่าย : เอกสารประกอบการเบิกจ่ายด้านการซื้อสินค้า ได้แก่  ใบส่งสินค้า หรือ ใบเสร็จรับเงิน(RECEIPT) หรือต้นฉบับใบกำกับภาษี หรือใบเสร็จรับเงิน/ใบกำกับภาษี หรือบิลเงินสด/ใบกำกับภาษี หรือบิลซื้อสินค้า หรือใบส่งของ หรือบิลเงินสดที่ระบุชื่อผู้กู้ หรือชื่อร้านแสนหวาน โดนัทแอนด์เบเกอรี่ และชื่อผู้ขาย ที่อยู่ พร้อมเบอร์โทรศัพท์ที่ติดต่อได้ โดยทั้งนี้ให้สาขาควบคุมการเบิกจ่ายให้เป็นไปตามวัตถุประสงค์", 0, null, null, null, null, "2402", "สาขาสุรินทร์", "", "", "", "", "", "", "", "", null, null, null, null, "", null, null, 0, null, 200000, null, 0, null, null, 1400999, 100, 0, 0, 0, 0, 0, 0, 239280, 0, 1586195, 100, null, 691127.21, 0, null, 333300, 20.8, null, 0, 0, null, 239280, null, 74847.21, null, null, null, null, null, null, null, null, null, "2025-11-30", "3.ธุรกิจผลิตและค้าอาหารและเครื่องดื่ม", 18918, 11223, 611, 0.05, 16200, 12346, 853, 0, null, null, null, null, null, null, null, null, null, 0, null, null, null, null, "G"]]}]}, {"name": "Condition1_", "value": 3}, {"name": "Condition2_", "value": 3}, {"name": "Condition3_", "value": 2}, {"name": "Condition4_", "value": 0}, {"name": "Condition5_", "value": 0}, {"name": "Condition6_", "value": 0}, {"name": "Capital1_", "value": 2}, {"name": "Capital2_", "value": 1}, {"name": "Capital3_", "value": 3}, {"name": "Capital4_", "value": 4}, {"name": "Capital5_", "value": 1}, {"name": "Capacity1_", "value": 5}, {"name": "Capacity2_", "value": 3}, {"name": "Capacity3_", "value": 1}, {"name": "Capacity4_", "value": 1}, {"name": "Capacity5_", "value": 3}, {"name": "Capacity6_", "value": 2}, {"name": "Capacity7_", "value": 1}, {"name": "Capacity8_", "value": 3}, {"name": "Character1_", "value": 2}, {"name": "Character2_", "value": 1}, {"name": "Character3_", "value": 3}, {"name": "Character4_", "value": 2}, {"name": "Character5_", "value": 2}, {"name": "Character6_", "value": 3}, {"name": "Character7_", "value": 5}, {"name": "Collateral1_", "value": 1}, {"name": "Collateral2_", "value": 1}, {"name": "Collateral3_", "value": 1}]}, "SME-LOWER|CA2": {"inputs": [{"name": "RegisNo_", "value": "500043621"}, {"name": "Segment_", "value": "SME-LOWER"}, {"name": "ApplicationType_", "value": "CA2"}, {"name": "CusType_", "value": "2"}, {"name": "NCBScore_", "value": 729}, {"name": "NCBScoreGrade_", "value": "EE"}, {"name": "CustomerInstallment_", "value": 15300}, {"name": "CustomerIndustryType_", "value": "N"}, {"name": "CustomerObjCodeDetail_", "value": "เงินทุนหมุนเวียน"}, {"name": "CustomerTermYear_", "value": 7}, {"name": "CustomerICR_", "value": 0}, {"name": "CustomerDSCR_", "value": 1.69}, {"name": "AF_Quantitative_", "value": [{"metadata": [{"ApplNo": "string"}, {"TransDate": "string"}, {"RegisName": "string"}, {"Registered": "string"}, {"IDCard": "string"}, {"CompanyAddress": "string"}, {"ComTitle": "string"}, {"ComName": "string"}, {"ComAddrNo": "string"}, {"ComBuild": "string"}, {"ComFloor": "string"}, {"ComMoo": "string"}, {"ComVillage": "string"}, {"ComSoi": "string"}, {"ComStreet": "string"}, {"ComDistric": "string"}, {"ComAmphur": "string"}, {"ComProvCode": "string"}, {"ComProvName": "string"}, {"ComFax": "string"}, {"ComDistricCode": "string"}, {"ComZip": "string"}, {"FirmName": "string"}, {"ContactPhon": "string"}, {"ContactMobile": "string"}, {"RegisAmount": "decimal"}, {"RegisPayAmt": "decimal"}, {"BussRegisNo": "string"}, {"BussRegisDate": "string"}, {"ISICCode_SME": "string"}, {"ISICCode_SMEName": "string"}, {"ISICCode_SME_PMScore": "integer"}, {"PM_Score": "integer"}, {"PM_Grade": "string"}, {"PM_ScoreDate": "string"}, {"ExeclutiveExperienceYY": "integer"}, {"ExeclutiveExperienceMM": "integer"}, {"ExeclutiveExperienceBussRegisYY": "integer"}, {"ExeclutiveExperienceBussRegisMM": "integer"}, {"IncomePerYear": "decimal"}, {"IncomeFromOperationPerYear": "decimal"}, {"isCheckedPurchaseCashFlag": "decimal"}, {"PurchaseCashFlag": "string"}, {"PurchaseCashPercentage": "decimal"}, {"isCheckedPurchaseCreditFlag": "decimal"}, {"PurchaseCreditFlag": "string"}, {"PurchaseCreditPercentage": "decimal"}, {"PurchaseCreditDays": "integer"}, {"isCheckedSaleCashFlag": "decimal"}, {"SaleCashFlag": "string"}, {"SaleCashPercentage": "decimal"}, {"isCheckedSaleCreditFlag": "decimal"}, {"SaleCreditFlag": "string"}, {"SaleCreditPercentage": "decimal"}, {"SaleCreditDays": "integer"}, {"CashAndDepositAtInterview": "decimal"}, {"InventoryStockAtInterview": "decimal"}, {"DebtInYearInterview": "decimal"}, {"ProjectTypeCode": "string"}, {"ProjectTypeName": "string"}, {"LoanTypeCode": "string"}, {"LoanTypeName": "string"}, {"ObjCode": "string"}, {"ObjCodeDetail": "string"}, {"ObjCodeOther": "string"}, {"Limit": "decimal"}, {"IntPerYear": "decimal"}, {"Rate": "decimal"}, {"Installment": "decimal"}, {"GracePeriod": "integer"}, {"TermYear": "integer"}, {"TermMonth": "integer"}, {"LimitTerm": "integer"}, {"TotalApprovedLimitAmt": "decimal"}, {"Outstanding": "decimal"}, {"TotalOutstanding": "decimal"}, {"ICR": "decimal"}, {"DSCR": "decimal"}, {"isCheckedNCBFlag": "decimal"}, {"NCBFlag": "string"}, {"NCBYear": "integer"}, {"NCBSearchDate": "string"}, {"NCBOverDue12MFlag": "string"}, {"NCBOverDue12M": "integer"}, {"NCBRESFlag": "string"}, {"NCBCommitteeFlag": "string"}, {"NCBTotalLimitAmt": "decimal"}, {"NCBTotalOutstanding": "decimal"}, {"NCBTotalInstallment": "decimal"}, {"RiskResult": "string"}, {"RiskCondition": "string"}, {"RiskCapital": "string"}, {"RiskCapacity": "string"}, {"RiskCharacter": "string"}, {"RiskCollateral": "string"}, {"SummaryComment": "string"}, {"isCheckedSendApprFlag": "decimal"}, {"SendApprFlag": "string"}, {"SendApprDate": "string"}, {"PrintDate": "string"}, {"ReprintRem": "string"}, {"DeptCodePreScreeningCode": "string"}, {"DeptCodePreScreeningName": "string"}, {"AOCode": "string"}, {"AOName": "string"}, {"AOCodeComment": "string"}, {"AOApproveFlag": "string"}, {"AOApproveDate": "string"}, {"AOApproveCode": "string"}, {"AOApproveName": "string"}, {"AOApproveComment": "string"}, {"Inputter": "string"}, {"RejectReasonCode": "string"}, {"RejectReasonName": "string"}, {"ReturnReasonDetail": "string"}, {"AoAnalystComment": "string"}, {"Guarantors": "string"}, {"RegisNoCoNames": "string"}, {"SubmitCRACount": "integer"}, {"SubmitCRAResult": "string"}, {"LimitCA": "decimal"}, {"IntTypeRate": "string"}, {"isCheckedSendCOApprFlag": "decimal"}, {"SendCOApprFlag": "string"}, {"SendCOApprDate": "string"}, {"FS_INC_RO_Income": "decimal"}, {"FS_INC_RO_IncomePercentage": "decimal"}, {"FS_INC_RO_GrossProfitMargin": "decimal"}, {"FS_INC_RO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_RO_SaleAndAdminExpense": "decimal"}, {"FS_INC_RO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_RO_FinancialCost": "decimal"}, {"FS_INC_RO_FinancialCostPercentage": "decimal"}, {"FS_INC_RO_DebtPayment": "decimal"}, {"FS_INC_RO_Balance": "decimal"}, {"FS_INC_CO_Income": "decimal"}, {"FS_INC_CO_IncomePercentage": "decimal"}, {"FS_INC_CO_IncomeReason": "string"}, {"FS_INC_CO_GrossProfitMargin": "decimal"}, {"FS_INC_CO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_CO_GrossProfitMarginReason": "string"}, {"FS_INC_CO_SaleAndAdminExpense": "decimal"}, {"FS_INC_CO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_CO_SaleAndAdminExpenseReason": "string"}, {"FS_INC_CO_FinancialCost": "decimal"}, {"FS_INC_CO_FinancialCostPercentage": "decimal"}, {"FS_INC_CO_FinancialCostReason": "string"}, {"FS_INC_CO_DebtPayment": "decimal"}, {"FS_INC_CO_DebtPaymentReason": "string"}, {"FS_INC_CO_Balance": "decimal"}, {"COCode": "string"}, {"COName": "string"}, {"CODate": "string"}, {"COComment": "string"}, {"CMFlag": "string"}, {"CMCode": "string"}, {"CMName": "string"}, {"CMDate": "string"}, {"CMComment": "string"}, {"RiskDate": "string"}, {"RiskBusiness": "string"}, {"RiskLimit": "decimal"}, {"RiskOutstanding": "decimal"}, {"RiskNPL": "decimal"}, {"RiskNPLOUT": "decimal"}, {"RiskCeiling": "decimal"}, {"RiskLimitNonFL": "decimal"}, {"RiskAddLimitAble": "decimal"}, {"ReturnReasonCode": "integer"}, {"ReturnReasonName": "string"}, {"RejectRem": "string"}, {"DeptAnalystFirstCode": "string"}, {"DeptAnalystFirstName": "string"}, {"DDObj": "string"}, {"ConditionContract": "string"}, {"ConditionDrawDown": "string"}, {"CollateralTCG": "string"}, {"CollateralGur": "string"}, {"PNDays": "integer"}, {"FEEDetail": "string"}, {"AuthorizeDate": "string"}, {"AuthorizeCode": "string"}, {"ScheduleRate": "string"}, {"AF_IndustryType": "string"}]}, {"data": [["AP69000007482", "2026-03-09: 10:49:13", "กิตติภัณฑ์ทรัพย์เจริญ", "Y", "0805566003896", "444/71 หมู่ที่ 1", "", "d69e09ab883f48f1a771977740cc8e10ab3f95ac778ca121a08c2df8e88b962690b6f7e9fa60de6b8909b911b67019af0220de807fd1d4d3cc6f071642fd7f742aac0e60baff4d7a3628e3e96be24f02d808c8090c9538634f863bb0643885b0b86faee509f7df986bd0233fbb319d98d7e5de5db64476b4c5ac39685e4db999ccb812d0b7f15689c5851801fd2e61d7b1470641da5ee5a30f9db462b215e03d16cd349438047a3f0e9225a00790553a", null, null, null, null, null, null, null, "เขาแก้ว", "ลานสกา", "66", "นครศรีธรรมราช", null, "800301", "80230", "c4a965eb84f7900d6f73b8a7bc1d2eb087e731777dacb1d3d26a8324bd4925a8b4851905e941be14b2714b8baec82bdf", "0828105431", "0828105431", 2000000, 2000000, "", "2023-11-13", "N812930", "กิจกรรมการฆ่าเชื้อและกำจัด", 4, 0, null, null, 2, 3, 2, 3, 11306952, 11306852, 1, "Y", 100, 0, "", 0, 0, 1, "Y", 100, 0, "", 0, 0, 39876, 0, 0, "P21204", "ปรับปรุงหลักเกณฑ์โครงการสินเชื่อปลุกพลัง SME", "01", "", "6", "เงินทุนหมุนเวียน", "", 1000000, 0, 0, 15300, 0, 7, 0, 84, 1000000, 0, 1000000, 0, 1.69, 1, "Y", 7, "2026-02-26", "NO", 0, "N", "N", 2133069, 1453583, 30605, null, null, null, null, null, null, "", 0, null, null, null, null, "2802", "สาขานครศรีธรรมราช", "", "", "", "", "", "", "", "", null, null, null, null, "", null, null, 0, null, 1000000, null, 0, null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6542509, 100, null, 3513661, 53.71, null, 2581127, 39.45, null, 0, 0, null, 367260, null, 381674, null, null, null, null, null, null, null, null, null, "", "", 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, null, null, null, null, null, null, 0, null, null, null, null, "N"]]}]}, {"name": "Condition1_", "value": 3}, {"name": "Condition2_", "value": 1}, {"name": "Condition3_", "value": 2}, {"name": "Condition4_", "value": 1}, {"name": "Condition5_", "value": 1}, {"name": "Condition6_", "value": 3}, {"name": "Capital1_", "value": 5}, {"name": "Capital2_", "value": 1}, {"name": "Capital3_", "value": 3}, {"name": "Capital4_", "value": 4}, {"name": "Capital5_", "value": 3}, {"name": "Capacity1_", "value": 4}, {"name": "Capacity2_", "value": 3}, {"name": "Capacity3_", "value": 1}, {"name": "Capacity4_", "value": 1}, {"name": "Capacity5_", "value": 3}, {"name": "Capacity6_", "value": 2}, {"name": "Capacity7_", "value": 2}, {"name": "Capacity8_", "value": 2}, {"name": "Character1_", "value": 4}, {"name": "Character2_", "value": 5}, {"name": "Character3_", "value": 5}, {"name": "Character4_", "value": 2}, {"name": "Character5_", "value": 2}, {"name": "Character6_", "value": 4}, {"name": "Character7_", "value": 6}, {"name": "Collateral1_", "value": 1}, {"name": "Collateral2_", "value": 1}, {"name": "Collateral3_", "value": 1}]}, "SME-UPPER1|CA2": {"inputs": [{"name": "RegisNo_", "value": "500032752"}, {"name": "Segment_", "value": "SME-UPPER1"}, {"name": "ApplicationType_", "value": "CA2"}, {"name": "CusType_", "value": "2"}, {"name": "NCBScore_", "value": 740}, {"name": "NCBScoreGrade_", "value": "DD"}, {"name": "CustomerInstallment_", "value": 36666.666666667}, {"name": "CustomerIndustryType_", "value": "G"}, {"name": "CustomerObjCodeDetail_", "value": "เงินทุนหมุนเวียน"}, {"name": "CustomerTermYear_", "value": 7}, {"name": "CustomerICR_", "value": 5.18}, {"name": "CustomerDSCR_", "value": 1.53}, {"name": "AF_Quantitative_", "value": [{"metadata": [{"ApplNo": "string"}, {"TransDate": "string"}, {"RegisName": "string"}, {"Registered": "string"}, {"IDCard": "string"}, {"CompanyAddress": "string"}, {"ComTitle": "string"}, {"ComName": "string"}, {"ComAddrNo": "string"}, {"ComBuild": "string"}, {"ComFloor": "string"}, {"ComMoo": "string"}, {"ComVillage": "string"}, {"ComSoi": "string"}, {"ComStreet": "string"}, {"ComDistric": "string"}, {"ComAmphur": "string"}, {"ComProvCode": "string"}, {"ComProvName": "string"}, {"ComFax": "string"}, {"ComDistricCode": "string"}, {"ComZip": "string"}, {"FirmName": "string"}, {"ContactPhon": "string"}, {"ContactMobile": "string"}, {"RegisAmount": "decimal"}, {"RegisPayAmt": "decimal"}, {"BussRegisNo": "string"}, {"BussRegisDate": "string"}, {"ISICCode_SME": "string"}, {"ISICCode_SMEName": "string"}, {"ISICCode_SME_PMScore": "integer"}, {"PM_Score": "integer"}, {"PM_Grade": "string"}, {"PM_ScoreDate": "string"}, {"ExeclutiveExperienceYY": "integer"}, {"ExeclutiveExperienceMM": "integer"}, {"ExeclutiveExperienceBussRegisYY": "integer"}, {"ExeclutiveExperienceBussRegisMM": "integer"}, {"IncomePerYear": "decimal"}, {"IncomeFromOperationPerYear": "decimal"}, {"isCheckedPurchaseCashFlag": "decimal"}, {"PurchaseCashFlag": "string"}, {"PurchaseCashPercentage": "decimal"}, {"isCheckedPurchaseCreditFlag": "decimal"}, {"PurchaseCreditFlag": "string"}, {"PurchaseCreditPercentage": "decimal"}, {"PurchaseCreditDays": "integer"}, {"isCheckedSaleCashFlag": "decimal"}, {"SaleCashFlag": "string"}, {"SaleCashPercentage": "decimal"}, {"isCheckedSaleCreditFlag": "decimal"}, {"SaleCreditFlag": "string"}, {"SaleCreditPercentage": "decimal"}, {"SaleCreditDays": "integer"}, {"CashAndDepositAtInterview": "decimal"}, {"InventoryStockAtInterview": "decimal"}, {"DebtInYearInterview": "decimal"}, {"ProjectTypeCode": "string"}, {"ProjectTypeName": "string"}, {"LoanTypeCode": "string"}, {"LoanTypeName": "string"}, {"ObjCode": "string"}, {"ObjCodeDetail": "string"}, {"ObjCodeOther": "string"}, {"Limit": "decimal"}, {"IntPerYear": "decimal"}, {"Rate": "decimal"}, {"Installment": "decimal"}, {"GracePeriod": "integer"}, {"TermYear": "integer"}, {"TermMonth": "integer"}, {"LimitTerm": "integer"}, {"TotalApprovedLimitAmt": "decimal"}, {"Outstanding": "decimal"}, {"TotalOutstanding": "decimal"}, {"ICR": "decimal"}, {"DSCR": "decimal"}, {"isCheckedNCBFlag": "decimal"}, {"NCBFlag": "string"}, {"NCBYear": "integer"}, {"NCBSearchDate": "string"}, {"NCBOverDue12MFlag": "string"}, {"NCBOverDue12M": "integer"}, {"NCBRESFlag": "string"}, {"NCBCommitteeFlag": "string"}, {"NCBTotalLimitAmt": "decimal"}, {"NCBTotalOutstanding": "decimal"}, {"NCBTotalInstallment": "decimal"}, {"RiskResult": "string"}, {"RiskCondition": "string"}, {"RiskCapital": "string"}, {"RiskCapacity": "string"}, {"RiskCharacter": "string"}, {"RiskCollateral": "string"}, {"SummaryComment": "string"}, {"isCheckedSendApprFlag": "decimal"}, {"SendApprFlag": "string"}, {"SendApprDate": "string"}, {"PrintDate": "string"}, {"ReprintRem": "string"}, {"DeptCodePreScreeningCode": "string"}, {"DeptCodePreScreeningName": "string"}, {"AOCode": "string"}, {"AOName": "string"}, {"AOCodeComment": "string"}, {"AOApproveFlag": "string"}, {"AOApproveDate": "string"}, {"AOApproveCode": "string"}, {"AOApproveName": "string"}, {"AOApproveComment": "string"}, {"Inputter": "string"}, {"RejectReasonCode": "string"}, {"RejectReasonName": "string"}, {"ReturnReasonDetail": "string"}, {"AoAnalystComment": "string"}, {"Guarantors": "string"}, {"RegisNoCoNames": "string"}, {"SubmitCRACount": "integer"}, {"SubmitCRAResult": "string"}, {"LimitCA": "decimal"}, {"IntTypeRate": "string"}, {"isCheckedSendCOApprFlag": "decimal"}, {"SendCOApprFlag": "string"}, {"SendCOApprDate": "string"}, {"FS_INC_RO_Income": "decimal"}, {"FS_INC_RO_IncomePercentage": "decimal"}, {"FS_INC_RO_GrossProfitMargin": "decimal"}, {"FS_INC_RO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_RO_SaleAndAdminExpense": "decimal"}, {"FS_INC_RO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_RO_FinancialCost": "decimal"}, {"FS_INC_RO_FinancialCostPercentage": "decimal"}, {"FS_INC_RO_DebtPayment": "decimal"}, {"FS_INC_RO_Balance": "decimal"}, {"FS_INC_CO_Income": "decimal"}, {"FS_INC_CO_IncomePercentage": "decimal"}, {"FS_INC_CO_IncomeReason": "string"}, {"FS_INC_CO_GrossProfitMargin": "decimal"}, {"FS_INC_CO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_CO_GrossProfitMarginReason": "string"}, {"FS_INC_CO_SaleAndAdminExpense": "decimal"}, {"FS_INC_CO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_CO_SaleAndAdminExpenseReason": "string"}, {"FS_INC_CO_FinancialCost": "decimal"}, {"FS_INC_CO_FinancialCostPercentage": "decimal"}, {"FS_INC_CO_FinancialCostReason": "string"}, {"FS_INC_CO_DebtPayment": "decimal"}, {"FS_INC_CO_DebtPaymentReason": "string"}, {"FS_INC_CO_Balance": "decimal"}, {"COCode": "string"}, {"COName": "string"}, {"CODate": "string"}, {"COComment": "string"}, {"CMFlag": "string"}, {"CMCode": "string"}, {"CMName": "string"}, {"CMDate": "string"}, {"CMComment": "string"}, {"RiskDate": "string"}, {"RiskBusiness": "string"}, {"RiskLimit": "decimal"}, {"RiskOutstanding": "decimal"}, {"RiskNPL": "decimal"}, {"RiskNPLOUT": "decimal"}, {"RiskCeiling": "decimal"}, {"RiskLimitNonFL": "decimal"}, {"RiskAddLimitAble": "decimal"}, {"ReturnReasonCode": "integer"}, {"ReturnReasonName": "string"}, {"RejectRem": "string"}, {"DeptAnalystFirstCode": "string"}, {"DeptAnalystFirstName": "string"}, {"DDObj": "string"}, {"ConditionContract": "string"}, {"ConditionDrawDown": "string"}, {"CollateralTCG": "string"}, {"CollateralGur": "string"}, {"PNDays": "integer"}, {"FEEDetail": "string"}, {"AuthorizeDate": "string"}, {"AuthorizeCode": "string"}, {"ScheduleRate": "string"}, {"AF_IndustryType": "string"}]}, {"data": [["AP69000004358", "2026-03-10: 12:52:06", "ห้างหุ้นส่วนจำกัด ประสพโชคโกลด์ช็อป", "Y", "0483559001222", "เลขที่ 247 หมู่ที่ 1 ต.ปลาปาก อ.ปลาปาก จ.นครพนม", "", "8d1e6b6d5c5728b252a78e54187dc4c24128cfd0d2995a1e541a1f928bff2d859c810c92c1222a541998217f116e03796893532ded68500752c46f0f34aad8f8599cabfdd7c3935c3e681728ea1aacf1bc8912117aa18db9d9ea6f107a7dab1a640de6a637329b6d98e481f9d05d4ce32cbd2da27cc0ccb33d7829e1fbad42f217a1c09c0d54fabeed4bb0d4b3dd07576b71aba19a5a7543fe1157be68878f184b16f2ee6e5b79bf2fe31e4b0a012c2a034b403c21c66ce733f0027d75f7e9dcb187c0d584bedc9152e65feb6fc04a1326d35dd0e3f7f37b75b34b2d233cd218ed4ce24e2a630cd638c47706836c68cf", null, null, null, null, null, null, null, "ปลาปาก", "ปลาปาก", "30", "นครพนม", null, "480201", "48160", "c4a965eb84f7900d6f73b8a7bc1d2eb087e731777dacb1d3d26a8324bd4925a8b4851905e941be14b2714b8baec82bdf", "", "0831452361", 5000000, 5000000, "", "2016-11-07", "G477320", "ร้านขายปลีกเครื่องประดับเพชรพลอย", 4, 0, null, null, 9, 4, 9, 4, 46105543, 46105543, 1, "Y", 100, 0, "", 0, 0, 1, "Y", 100, 0, "", 0, 0, 1747376, 85315000, 0, "P25845", "หลักเกณฑ์โครงการสินเชื่อ BCG Economy (2568) คำสั่งที่ 89/2568", "03", "", "6", "เงินทุนหมุนเวียน", "", 5000000, 440000, 0, 440000, 0, 7, 0, 84, 5000000, 0, 5000000, 5.18, 1.53, 1, "Y", 7, "2026-02-11", "NO", 0, "N", "Y", 8860160, 5141252, 97892, null, null, null, null, null, null, "", 0, null, null, null, null, "2308", "สาขานครพนม", "", "", "", "", "", "", "", "", null, null, null, null, "", null, null, 0, null, 5000000, null, 0, null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 48410820, 100, null, 4841082, 10, null, 486831, 1.01, null, 397040, 0.82, null, 2479904, null, 1507680, null, null, null, null, null, null, null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, null, null, null, null, null, null, 0, null, null, null, null, "G"]]}]}, {"name": "Condition1_", "value": 3}, {"name": "Condition2_", "value": 1}, {"name": "Condition3_", "value": 3}, {"name": "Condition4_", "value": 1}, {"name": "Condition5_", "value": 1}, {"name": "Condition6_", "value": 3}, {"name": "Capital1_", "value": 1}, {"name": "Capital2_", "value": 1}, {"name": "Capital3_", "value": 3}, {"name": "Capital4_", "value": 4}, {"name": "Capital5_", "value": 2}, {"name": "Capacity1_", "value": 5}, {"name": "Capacity2_", "value": 4}, {"name": "Capacity3_", "value": 1}, {"name": "Capacity4_", "value": 1}, {"name": "Capacity5_", "value": 3}, {"name": "Capacity6_", "value": 2}, {"name": "Capacity7_", "value": 2}, {"name": "Capacity8_", "value": 5}, {"name": "Character1_", "value": 4}, {"name": "Character2_", "value": 5}, {"name": "Character3_", "value": 5}, {"name": "Character4_", "value": 2}, {"name": "Character5_", "value": 2}, {"name": "Character6_", "value": 5}, {"name": "Character7_", "value": 6}, {"name": "Collateral1_", "value": 1}, {"name": "Collateral2_", "value": 1}, {"name": "Collateral3_", "value": 3}]}, "SME-M|CA2": {"inputs": [{"name": "RegisNo_", "value": "500074395"}, {"name": "Segment_", "value": "SME-M"}, {"name": "ApplicationType_", "value": "CA2"}, {"name": "CusType_", "value": "2"}, {"name": "NCBScore_", "value": 780}, {"name": "NCBScoreGrade_", "value": "CC"}, {"name": "CustomerInstallment_", "value": 138000}, {"name": "CustomerIndustryType_", "value": "B"}, {"name": "CustomerObjCodeDetail_", "value": "เครื่องจักรหรืออุปกรณ์"}, {"name": "CustomerTermYear_", "value": 7}, {"name": "CustomerICR_", "value": 1026.04}, {"name": "CustomerDSCR_", "value": 2.11}, {"name": "AF_Quantitative_", "value": [{"metadata": [{"ApplNo": "string"}, {"TransDate": "string"}, {"RegisName": "string"}, {"Registered": "string"}, {"IDCard": "string"}, {"CompanyAddress": "string"}, {"ComTitle": "string"}, {"ComName": "string"}, {"ComAddrNo": "string"}, {"ComBuild": "string"}, {"ComFloor": "string"}, {"ComMoo": "string"}, {"ComVillage": "string"}, {"ComSoi": "string"}, {"ComStreet": "string"}, {"ComDistric": "string"}, {"ComAmphur": "string"}, {"ComProvCode": "string"}, {"ComProvName": "string"}, {"ComFax": "string"}, {"ComDistricCode": "string"}, {"ComZip": "string"}, {"FirmName": "string"}, {"ContactPhon": "string"}, {"ContactMobile": "string"}, {"RegisAmount": "decimal"}, {"RegisPayAmt": "decimal"}, {"BussRegisNo": "string"}, {"BussRegisDate": "string"}, {"ISICCode_SME": "string"}, {"ISICCode_SMEName": "string"}, {"ISICCode_SME_PMScore": "integer"}, {"PM_Score": "integer"}, {"PM_Grade": "string"}, {"PM_ScoreDate": "string"}, {"ExeclutiveExperienceYY": "integer"}, {"ExeclutiveExperienceMM": "integer"}, {"ExeclutiveExperienceBussRegisYY": "integer"}, {"ExeclutiveExperienceBussRegisMM": "integer"}, {"IncomePerYear": "decimal"}, {"IncomeFromOperationPerYear": "decimal"}, {"isCheckedPurchaseCashFlag": "decimal"}, {"PurchaseCashFlag": "string"}, {"PurchaseCashPercentage": "decimal"}, {"isCheckedPurchaseCreditFlag": "decimal"}, {"PurchaseCreditFlag": "string"}, {"PurchaseCreditPercentage": "decimal"}, {"PurchaseCreditDays": "integer"}, {"isCheckedSaleCashFlag": "decimal"}, {"SaleCashFlag": "string"}, {"SaleCashPercentage": "decimal"}, {"isCheckedSaleCreditFlag": "decimal"}, {"SaleCreditFlag": "string"}, {"SaleCreditPercentage": "decimal"}, {"SaleCreditDays": "integer"}, {"CashAndDepositAtInterview": "decimal"}, {"InventoryStockAtInterview": "decimal"}, {"DebtInYearInterview": "decimal"}, {"ProjectTypeCode": "string"}, {"ProjectTypeName": "string"}, {"LoanTypeCode": "string"}, {"LoanTypeName": "string"}, {"ObjCode": "string"}, {"ObjCodeDetail": "string"}, {"ObjCodeOther": "string"}, {"Limit": "decimal"}, {"IntPerYear": "decimal"}, {"Rate": "decimal"}, {"Installment": "decimal"}, {"GracePeriod": "integer"}, {"TermYear": "integer"}, {"TermMonth": "integer"}, {"LimitTerm": "integer"}, {"TotalApprovedLimitAmt": "decimal"}, {"Outstanding": "decimal"}, {"TotalOutstanding": "decimal"}, {"ICR": "decimal"}, {"DSCR": "decimal"}, {"isCheckedNCBFlag": "decimal"}, {"NCBFlag": "string"}, {"NCBYear": "integer"}, {"NCBSearchDate": "string"}, {"NCBOverDue12MFlag": "string"}, {"NCBOverDue12M": "integer"}, {"NCBRESFlag": "string"}, {"NCBCommitteeFlag": "string"}, {"NCBTotalLimitAmt": "decimal"}, {"NCBTotalOutstanding": "decimal"}, {"NCBTotalInstallment": "decimal"}, {"RiskResult": "string"}, {"RiskCondition": "string"}, {"RiskCapital": "string"}, {"RiskCapacity": "string"}, {"RiskCharacter": "string"}, {"RiskCollateral": "string"}, {"SummaryComment": "string"}, {"isCheckedSendApprFlag": "decimal"}, {"SendApprFlag": "string"}, {"SendApprDate": "string"}, {"PrintDate": "string"}, {"ReprintRem": "string"}, {"DeptCodePreScreeningCode": "string"}, {"DeptCodePreScreeningName": "string"}, {"AOCode": "string"}, {"AOName": "string"}, {"AOCodeComment": "string"}, {"AOApproveFlag": "string"}, {"AOApproveDate": "string"}, {"AOApproveCode": "string"}, {"AOApproveName": "string"}, {"AOApproveComment": "string"}, {"Inputter": "string"}, {"RejectReasonCode": "string"}, {"RejectReasonName": "string"}, {"ReturnReasonDetail": "string"}, {"AoAnalystComment": "string"}, {"Guarantors": "string"}, {"RegisNoCoNames": "string"}, {"SubmitCRACount": "integer"}, {"SubmitCRAResult": "string"}, {"LimitCA": "decimal"}, {"IntTypeRate": "string"}, {"isCheckedSendCOApprFlag": "decimal"}, {"SendCOApprFlag": "string"}, {"SendCOApprDate": "string"}, {"FS_INC_RO_Income": "decimal"}, {"FS_INC_RO_IncomePercentage": "decimal"}, {"FS_INC_RO_GrossProfitMargin": "decimal"}, {"FS_INC_RO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_RO_SaleAndAdminExpense": "decimal"}, {"FS_INC_RO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_RO_FinancialCost": "decimal"}, {"FS_INC_RO_FinancialCostPercentage": "decimal"}, {"FS_INC_RO_DebtPayment": "decimal"}, {"FS_INC_RO_Balance": "decimal"}, {"FS_INC_CO_Income": "decimal"}, {"FS_INC_CO_IncomePercentage": "decimal"}, {"FS_INC_CO_IncomeReason": "string"}, {"FS_INC_CO_GrossProfitMargin": "decimal"}, {"FS_INC_CO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_CO_GrossProfitMarginReason": "string"}, {"FS_INC_CO_SaleAndAdminExpense": "decimal"}, {"FS_INC_CO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_CO_SaleAndAdminExpenseReason": "string"}, {"FS_INC_CO_FinancialCost": "decimal"}, {"FS_INC_CO_FinancialCostPercentage": "decimal"}, {"FS_INC_CO_FinancialCostReason": "string"}, {"FS_INC_CO_DebtPayment": "decimal"}, {"FS_INC_CO_DebtPaymentReason": "string"}, {"FS_INC_CO_Balance": "decimal"}, {"COCode": "string"}, {"COName": "string"}, {"CODate": "string"}, {"COComment": "string"}, {"CMFlag": "string"}, {"CMCode": "string"}, {"CMName": "string"}, {"CMDate": "string"}, {"CMComment": "string"}, {"RiskDate": "string"}, {"RiskBusiness": "string"}, {"RiskLimit": "decimal"}, {"RiskOutstanding": "decimal"}, {"RiskNPL": "decimal"}, {"RiskNPLOUT": "decimal"}, {"RiskCeiling": "decimal"}, {"RiskLimitNonFL": "decimal"}, {"RiskAddLimitAble": "decimal"}, {"ReturnReasonCode": "integer"}, {"ReturnReasonName": "string"}, {"RejectRem": "string"}, {"DeptAnalystFirstCode": "string"}, {"DeptAnalystFirstName": "string"}, {"DDObj": "string"}, {"ConditionContract": "string"}, {"ConditionDrawDown": "string"}, {"CollateralTCG": "string"}, {"CollateralGur": "string"}, {"PNDays": "integer"}, {"FEEDetail": "string"}, {"AuthorizeDate": "string"}, {"AuthorizeCode": "string"}, {"ScheduleRate": "string"}, {"AF_IndustryType": "string"}]}, {"data": [["AP69000007496", "2026-03-11: 07:24:57", "บริษัท เหมืองหินศิริพัฒนา จำกัด", "Y", "0195539000012", "1/1 หมู่ที่ 9", "", "33a2da938d02234b438c8992b257e0a02281c11f60542499b7d8161f4e7e2e42b9422d49bece56a5f48c77cc760070b52772371b1a7fe270e2bf75053c14bd9e50c5e4850a28d537fece5b91280038674869322d9bed146b4aef760b7e9cd3a59fcb5c08aa0bd81f7635c24be14548a94af7cc3032961d000616823f7a8102ad202686abe32e2c0f1ad82ef3c501972c4f841a5de49b3a31934391672a67d6d4c367e7181de11b727ed5b2f345df3ed553c09218387f7453372e0fae3068d2ee454e361ae4fc0ce3ee6d60a8d7185874", "", "", "", "", "", "", "", "พุกร่าง", "พระพุทธบาท", "15", "สระบุรี", "", "190908", "18120", "b6c744facce22f1ed112a4fdbb38deefb8cfd165fa4aa550df3b2f81d0613b35ca7d58a4ffa6dfa4dcd67dc28865b6a671b6452d5154852711c6d651353ec916a19f27c0f9915a92ac02897b5a819b41a7ad89d0ab01192a8a371e27e1768a7e1a257351bb86ae6e8142faf0d6616b52cc9b1f11120bd3af3ae01d9d2986a931424cbb02cdaaa46ebe44c7dc6c018085dc31cd3937f13c322e7fdc0faf9606427e34611b449e5e1c512988f069b9cb9414821933c4853cdae65d10d1de1b676fa7255bc4272078579d2444f3e96b501a", "", "0846539999", 15000000, 15000000, "", "1996-01-03", "B081000", "การทำเหมืองหิน ทราย และดิน", 4, 0, null, null, 30, 2, 30, 2, 115792247, 96160020, 1, "Y", 50, 1, "Y", 50, 30, 1, "Y", 100, 0, "", 0, 0, 12050097, 7661205, 7781624, null, null, null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, 9900000, 0, 9900000, 1026.04, 2.11, 1, "Y", 4, "2026-02-26", "NO", 0, "N", "Y", 31378299, 9718109, 752196, null, null, null, null, null, null, "", 0, null, null, null, null, "2100", "สาขาพระนครศรีอยุธยา", "", "", "", "", "", "", "", "", null, null, null, null, "", null, null, 0, null, 0, null, 0, null, null, 96160020, 100, 22689116, 23.6, 6110658, 6.35, 4156, 0, 6627658, 8708800, 0, 0, null, 0, 0, null, 0, 0, null, 0, 0, null, 0, null, 0, null, null, null, null, null, null, null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, null, null, null, null, null, null, 0, null, null, null, null, "B"]]}]}, {"name": "Condition1_", "value": 3}, {"name": "Condition2_", "value": 1}, {"name": "Condition3_", "value": 5}, {"name": "Condition4_", "value": 4}, {"name": "Condition5_", "value": 1}, {"name": "Condition6_", "value": 3}, {"name": "Capital1_", "value": 4}, {"name": "Capital2_", "value": 1}, {"name": "Capital3_", "value": 1}, {"name": "Capital4_", "value": 4}, {"name": "Capital5_", "value": 3}, {"name": "Capacity1_", "value": 2}, {"name": "Capacity2_", "value": 2}, {"name": "Capacity3_", "value": 2}, {"name": "Capacity4_", "value": 1}, {"name": "Capacity5_", "value": 2}, {"name": "Capacity6_", "value": 2}, {"name": "Capacity7_", "value": 3}, {"name": "Capacity8_", "value": 3}, {"name": "Character1_", "value": 4}, {"name": "Character2_", "value": 5}, {"name": "Character3_", "value": 5}, {"name": "Character4_", "value": 2}, {"name": "Character5_", "value": 2}, {"name": "Character6_", "value": 4}, {"name": "Character7_", "value": 6}, {"name": "Collateral1_", "value": 1}, {"name": "Collateral2_", "value": 1}, {"name": "Collateral3_", "value": 1}]}, "SME-L|CA2": {"inputs": [{"name": "RegisNo_", "value": "500058204"}, {"name": "Segment_", "value": "SME-L"}, {"name": "ApplicationType_", "value": "CA2"}, {"name": "CusType_", "value": "2"}, {"name": "NCBScore_", "value": 684}, {"name": "NCBScoreGrade_", "value": "GG"}, {"name": "CustomerInstallment_", "value": 29383.333333333}, {"name": "CustomerIndustryType_", "value": "G"}, {"name": "CustomerObjCodeDetail_", "value": "เงินทุนหมุนเวียน"}, {"name": "CustomerTermYear_", "value": 10}, {"name": "CustomerICR_", "value": 0.31}, {"name": "CustomerDSCR_", "value": 2.84}, {"name": "AF_Quantitative_", "value": [{"metadata": [{"ApplNo": "string"}, {"TransDate": "string"}, {"RegisName": "string"}, {"Registered": "string"}, {"IDCard": "string"}, {"CompanyAddress": "string"}, {"ComTitle": "string"}, {"ComName": "string"}, {"ComAddrNo": "string"}, {"ComBuild": "string"}, {"ComFloor": "string"}, {"ComMoo": "string"}, {"ComVillage": "string"}, {"ComSoi": "string"}, {"ComStreet": "string"}, {"ComDistric": "string"}, {"ComAmphur": "string"}, {"ComProvCode": "string"}, {"ComProvName": "string"}, {"ComFax": "string"}, {"ComDistricCode": "string"}, {"ComZip": "string"}, {"FirmName": "string"}, {"ContactPhon": "string"}, {"ContactMobile": "string"}, {"RegisAmount": "decimal"}, {"RegisPayAmt": "decimal"}, {"BussRegisNo": "string"}, {"BussRegisDate": "string"}, {"ISICCode_SME": "string"}, {"ISICCode_SMEName": "string"}, {"ISICCode_SME_PMScore": "integer"}, {"PM_Score": "integer"}, {"PM_Grade": "string"}, {"PM_ScoreDate": "string"}, {"ExeclutiveExperienceYY": "integer"}, {"ExeclutiveExperienceMM": "integer"}, {"ExeclutiveExperienceBussRegisYY": "integer"}, {"ExeclutiveExperienceBussRegisMM": "integer"}, {"IncomePerYear": "decimal"}, {"IncomeFromOperationPerYear": "decimal"}, {"isCheckedPurchaseCashFlag": "decimal"}, {"PurchaseCashFlag": "string"}, {"PurchaseCashPercentage": "decimal"}, {"isCheckedPurchaseCreditFlag": "decimal"}, {"PurchaseCreditFlag": "string"}, {"PurchaseCreditPercentage": "decimal"}, {"PurchaseCreditDays": "integer"}, {"isCheckedSaleCashFlag": "decimal"}, {"SaleCashFlag": "string"}, {"SaleCashPercentage": "decimal"}, {"isCheckedSaleCreditFlag": "decimal"}, {"SaleCreditFlag": "string"}, {"SaleCreditPercentage": "decimal"}, {"SaleCreditDays": "integer"}, {"CashAndDepositAtInterview": "decimal"}, {"InventoryStockAtInterview": "decimal"}, {"DebtInYearInterview": "decimal"}, {"ProjectTypeCode": "string"}, {"ProjectTypeName": "string"}, {"LoanTypeCode": "string"}, {"LoanTypeName": "string"}, {"ObjCode": "string"}, {"ObjCodeDetail": "string"}, {"ObjCodeOther": "string"}, {"Limit": "decimal"}, {"IntPerYear": "decimal"}, {"Rate": "decimal"}, {"Installment": "decimal"}, {"GracePeriod": "integer"}, {"TermYear": "integer"}, {"TermMonth": "integer"}, {"LimitTerm": "integer"}, {"TotalApprovedLimitAmt": "decimal"}, {"Outstanding": "decimal"}, {"TotalOutstanding": "decimal"}, {"ICR": "decimal"}, {"DSCR": "decimal"}, {"isCheckedNCBFlag": "decimal"}, {"NCBFlag": "string"}, {"NCBYear": "integer"}, {"NCBSearchDate": "string"}, {"NCBOverDue12MFlag": "string"}, {"NCBOverDue12M": "integer"}, {"NCBRESFlag": "string"}, {"NCBCommitteeFlag": "string"}, {"NCBTotalLimitAmt": "decimal"}, {"NCBTotalOutstanding": "decimal"}, {"NCBTotalInstallment": "decimal"}, {"RiskResult": "string"}, {"RiskCondition": "string"}, {"RiskCapital": "string"}, {"RiskCapacity": "string"}, {"RiskCharacter": "string"}, {"RiskCollateral": "string"}, {"SummaryComment": "string"}, {"isCheckedSendApprFlag": "decimal"}, {"SendApprFlag": "string"}, {"SendApprDate": "string"}, {"PrintDate": "string"}, {"ReprintRem": "string"}, {"DeptCodePreScreeningCode": "string"}, {"DeptCodePreScreeningName": "string"}, {"AOCode": "string"}, {"AOName": "string"}, {"AOCodeComment": "string"}, {"AOApproveFlag": "string"}, {"AOApproveDate": "string"}, {"AOApproveCode": "string"}, {"AOApproveName": "string"}, {"AOApproveComment": "string"}, {"Inputter": "string"}, {"RejectReasonCode": "string"}, {"RejectReasonName": "string"}, {"ReturnReasonDetail": "string"}, {"AoAnalystComment": "string"}, {"Guarantors": "string"}, {"RegisNoCoNames": "string"}, {"SubmitCRACount": "integer"}, {"SubmitCRAResult": "string"}, {"LimitCA": "decimal"}, {"IntTypeRate": "string"}, {"isCheckedSendCOApprFlag": "decimal"}, {"SendCOApprFlag": "string"}, {"SendCOApprDate": "string"}, {"FS_INC_RO_Income": "decimal"}, {"FS_INC_RO_IncomePercentage": "decimal"}, {"FS_INC_RO_GrossProfitMargin": "decimal"}, {"FS_INC_RO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_RO_SaleAndAdminExpense": "decimal"}, {"FS_INC_RO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_RO_FinancialCost": "decimal"}, {"FS_INC_RO_FinancialCostPercentage": "decimal"}, {"FS_INC_RO_DebtPayment": "decimal"}, {"FS_INC_RO_Balance": "decimal"}, {"FS_INC_CO_Income": "decimal"}, {"FS_INC_CO_IncomePercentage": "decimal"}, {"FS_INC_CO_IncomeReason": "string"}, {"FS_INC_CO_GrossProfitMargin": "decimal"}, {"FS_INC_CO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_CO_GrossProfitMarginReason": "string"}, {"FS_INC_CO_SaleAndAdminExpense": "decimal"}, {"FS_INC_CO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_CO_SaleAndAdminExpenseReason": "string"}, {"FS_INC_CO_FinancialCost": "decimal"}, {"FS_INC_CO_FinancialCostPercentage": "decimal"}, {"FS_INC_CO_FinancialCostReason": "string"}, {"FS_INC_CO_DebtPayment": "decimal"}, {"FS_INC_CO_DebtPaymentReason": "string"}, {"FS_INC_CO_Balance": "decimal"}, {"COCode": "string"}, {"COName": "string"}, {"CODate": "string"}, {"COComment": "string"}, {"CMFlag": "string"}, {"CMCode": "string"}, {"CMName": "string"}, {"CMDate": "string"}, {"CMComment": "string"}, {"RiskDate": "string"}, {"RiskBusiness": "string"}, {"RiskLimit": "decimal"}, {"RiskOutstanding": "decimal"}, {"RiskNPL": "decimal"}, {"RiskNPLOUT": "decimal"}, {"RiskCeiling": "decimal"}, {"RiskLimitNonFL": "decimal"}, {"RiskAddLimitAble": "decimal"}, {"ReturnReasonCode": "integer"}, {"ReturnReasonName": "string"}, {"RejectRem": "string"}, {"DeptAnalystFirstCode": "string"}, {"DeptAnalystFirstName": "string"}, {"DDObj": "string"}, {"ConditionContract": "string"}, {"ConditionDrawDown": "string"}, {"CollateralTCG": "string"}, {"CollateralGur": "string"}, {"PNDays": "integer"}, {"FEEDetail": "string"}, {"AuthorizeDate": "string"}, {"AuthorizeCode": "string"}, {"ScheduleRate": "string"}, {"AF_IndustryType": "string"}]}, {"data": [["AP69000003558", "2026-03-31: 13:17:35", "สุชาวดี เทรดดิ้ง", "Y", "0755561000130", "35/1  หมู่ 8", "", "75c9683c1d1123e4f79f0aba60e23a36ac5d1139449732b8271c791b63e8d514114a6bdf25cf6736830e9bf302f627c4", "", "", "", "", "", "", "", "วัดประดู่", "อัมพวา", "14", "สมุทรสงคราม", "", "750304", "75110", "a66ce82f4356a949ad3d251d98bd70f50c52b26fc798a4eabbbb397eeaf072e2c274cc933a7be427a2e02b216924d7e0", "", "0818805403", 3000000, 3000000, "", "2018-03-08", "G463170", "การขายส่งน้ำตาล ช็อกโกแลต ลูกกวาด และขนมที่ทำจากน้ำตาล", 4, 0, null, null, 9, 0, 8, 0, 554476281, 560021044, 1, "Y", 30, 1, "Y", 70, 14, 1, "Y", 40, 1, "Y", 60, 30, 64704.64, 45420351.83, 2371200, null, null, null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, 4100000, 5046388, 9146388, 0.31, 2.84, 1, "Y", 5, "2026-02-09", "NO", 0, "N", "Y", 56171775, 41482332, 518322, null, null, null, null, null, null, "", 0, null, null, null, null, "2702", "สาขาสมุทรสงคราม", "", "", "", "", "", "", "", "", null, null, null, null, "", null, null, 0, null, 0, null, 0, null, null, 560021044, 100, 24084464, 4.3, 7665791, 1.37, 51762073, 9.24, 5684016, 10642407, 0, 0, null, 0, 0, null, 0, 0, null, 0, 0, null, 0, null, 0, null, null, null, null, null, null, null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, null, null, null, null, null, null, 0, null, null, null, null, "G"]]}]}, {"name": "Condition1_", "value": 4}, {"name": "Condition2_", "value": 1}, {"name": "Condition3_", "value": 2}, {"name": "Condition4_", "value": 4}, {"name": "Condition5_", "value": 3}, {"name": "Condition6_", "value": 3}, {"name": "Capital1_", "value": 4}, {"name": "Capital2_", "value": 1}, {"name": "Capital3_", "value": 1}, {"name": "Capital4_", "value": 4}, {"name": "Capital5_", "value": 3}, {"name": "Capacity1_", "value": 3}, {"name": "Capacity2_", "value": 2}, {"name": "Capacity3_", "value": 1}, {"name": "Capacity4_", "value": 1}, {"name": "Capacity5_", "value": 3}, {"name": "Capacity6_", "value": 2}, {"name": "Capacity7_", "value": 1}, {"name": "Capacity8_", "value": 1}, {"name": "Character1_", "value": 4}, {"name": "Character2_", "value": 5}, {"name": "Character3_", "value": 4}, {"name": "Character4_", "value": 1}, {"name": "Character5_", "value": 1}, {"name": "Character6_", "value": 4}, {"name": "Character7_", "value": 6}, {"name": "Collateral1_", "value": 2}, {"name": "Collateral2_", "value": 5}, {"name": "Collateral3_", "value": 3}]}, "SME-UPPER2|CA2": {"inputs": [{"name": "RegisNo_", "value": "500069116"}, {"name": "Segment_", "value": "SME-UPPER2"}, {"name": "ApplicationType_", "value": "CA2"}, {"name": "CusType_", "value": "2"}, {"name": "NCBScore_", "value": 723}, {"name": "NCBScoreGrade_", "value": "EE"}, {"name": "CustomerInstallment_", "value": 98333.333333333}, {"name": "CustomerIndustryType_", "value": "F"}, {"name": "CustomerObjCodeDetail_", "value": "เงินทุนหมุนเวียน"}, {"name": "CustomerTermYear_", "value": 1}, {"name": "CustomerICR_", "value": 5.82}, {"name": "CustomerDSCR_", "value": 1.34}, {"name": "AF_Quantitative_", "value": [{"metadata": [{"ApplNo": "string"}, {"TransDate": "string"}, {"RegisName": "string"}, {"Registered": "string"}, {"IDCard": "string"}, {"CompanyAddress": "string"}, {"ComTitle": "string"}, {"ComName": "string"}, {"ComAddrNo": "string"}, {"ComBuild": "string"}, {"ComFloor": "string"}, {"ComMoo": "string"}, {"ComVillage": "string"}, {"ComSoi": "string"}, {"ComStreet": "string"}, {"ComDistric": "string"}, {"ComAmphur": "string"}, {"ComProvCode": "string"}, {"ComProvName": "string"}, {"ComFax": "string"}, {"ComDistricCode": "string"}, {"ComZip": "string"}, {"FirmName": "string"}, {"ContactPhon": "string"}, {"ContactMobile": "string"}, {"RegisAmount": "decimal"}, {"RegisPayAmt": "decimal"}, {"BussRegisNo": "string"}, {"BussRegisDate": "string"}, {"ISICCode_SME": "string"}, {"ISICCode_SMEName": "string"}, {"ISICCode_SME_PMScore": "integer"}, {"PM_Score": "integer"}, {"PM_Grade": "string"}, {"PM_ScoreDate": "string"}, {"ExeclutiveExperienceYY": "integer"}, {"ExeclutiveExperienceMM": "integer"}, {"ExeclutiveExperienceBussRegisYY": "integer"}, {"ExeclutiveExperienceBussRegisMM": "integer"}, {"IncomePerYear": "decimal"}, {"IncomeFromOperationPerYear": "decimal"}, {"isCheckedPurchaseCashFlag": "decimal"}, {"PurchaseCashFlag": "string"}, {"PurchaseCashPercentage": "decimal"}, {"isCheckedPurchaseCreditFlag": "decimal"}, {"PurchaseCreditFlag": "string"}, {"PurchaseCreditPercentage": "decimal"}, {"PurchaseCreditDays": "integer"}, {"isCheckedSaleCashFlag": "decimal"}, {"SaleCashFlag": "string"}, {"SaleCashPercentage": "decimal"}, {"isCheckedSaleCreditFlag": "decimal"}, {"SaleCreditFlag": "string"}, {"SaleCreditPercentage": "decimal"}, {"SaleCreditDays": "integer"}, {"CashAndDepositAtInterview": "decimal"}, {"InventoryStockAtInterview": "decimal"}, {"DebtInYearInterview": "decimal"}, {"ProjectTypeCode": "string"}, {"ProjectTypeName": "string"}, {"LoanTypeCode": "string"}, {"LoanTypeName": "string"}, {"ObjCode": "string"}, {"ObjCodeDetail": "string"}, {"ObjCodeOther": "string"}, {"Limit": "decimal"}, {"IntPerYear": "decimal"}, {"Rate": "decimal"}, {"Installment": "decimal"}, {"GracePeriod": "integer"}, {"TermYear": "integer"}, {"TermMonth": "integer"}, {"LimitTerm": "integer"}, {"TotalApprovedLimitAmt": "decimal"}, {"Outstanding": "decimal"}, {"TotalOutstanding": "decimal"}, {"ICR": "decimal"}, {"DSCR": "decimal"}, {"isCheckedNCBFlag": "decimal"}, {"NCBFlag": "string"}, {"NCBYear": "integer"}, {"NCBSearchDate": "string"}, {"NCBOverDue12MFlag": "string"}, {"NCBOverDue12M": "integer"}, {"NCBRESFlag": "string"}, {"NCBCommitteeFlag": "string"}, {"NCBTotalLimitAmt": "decimal"}, {"NCBTotalOutstanding": "decimal"}, {"NCBTotalInstallment": "decimal"}, {"RiskResult": "string"}, {"RiskCondition": "string"}, {"RiskCapital": "string"}, {"RiskCapacity": "string"}, {"RiskCharacter": "string"}, {"RiskCollateral": "string"}, {"SummaryComment": "string"}, {"isCheckedSendApprFlag": "decimal"}, {"SendApprFlag": "string"}, {"SendApprDate": "string"}, {"PrintDate": "string"}, {"ReprintRem": "string"}, {"DeptCodePreScreeningCode": "string"}, {"DeptCodePreScreeningName": "string"}, {"AOCode": "string"}, {"AOName": "string"}, {"AOCodeComment": "string"}, {"AOApproveFlag": "string"}, {"AOApproveDate": "string"}, {"AOApproveCode": "string"}, {"AOApproveName": "string"}, {"AOApproveComment": "string"}, {"Inputter": "string"}, {"RejectReasonCode": "string"}, {"RejectReasonName": "string"}, {"ReturnReasonDetail": "string"}, {"AoAnalystComment": "string"}, {"Guarantors": "string"}, {"RegisNoCoNames": "string"}, {"SubmitCRACount": "integer"}, {"SubmitCRAResult": "string"}, {"LimitCA": "decimal"}, {"IntTypeRate": "string"}, {"isCheckedSendCOApprFlag": "decimal"}, {"SendCOApprFlag": "string"}, {"SendCOApprDate": "string"}, {"FS_INC_RO_Income": "decimal"}, {"FS_INC_RO_IncomePercentage": "decimal"}, {"FS_INC_RO_GrossProfitMargin": "decimal"}, {"FS_INC_RO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_RO_SaleAndAdminExpense": "decimal"}, {"FS_INC_RO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_RO_FinancialCost": "decimal"}, {"FS_INC_RO_FinancialCostPercentage": "decimal"}, {"FS_INC_RO_DebtPayment": "decimal"}, {"FS_INC_RO_Balance": "decimal"}, {"FS_INC_CO_Income": "decimal"}, {"FS_INC_CO_IncomePercentage": "decimal"}, {"FS_INC_CO_IncomeReason": "string"}, {"FS_INC_CO_GrossProfitMargin": "decimal"}, {"FS_INC_CO_GrossProfitMarginPercentage": "decimal"}, {"FS_INC_CO_GrossProfitMarginReason": "string"}, {"FS_INC_CO_SaleAndAdminExpense": "decimal"}, {"FS_INC_CO_SaleAndAdminExpensePercentage": "decimal"}, {"FS_INC_CO_SaleAndAdminExpenseReason": "string"}, {"FS_INC_CO_FinancialCost": "decimal"}, {"FS_INC_CO_FinancialCostPercentage": "decimal"}, {"FS_INC_CO_FinancialCostReason": "string"}, {"FS_INC_CO_DebtPayment": "decimal"}, {"FS_INC_CO_DebtPaymentReason": "string"}, {"FS_INC_CO_Balance": "decimal"}, {"COCode": "string"}, {"COName": "string"}, {"CODate": "string"}, {"COComment": "string"}, {"CMFlag": "string"}, {"CMCode": "string"}, {"CMName": "string"}, {"CMDate": "string"}, {"CMComment": "string"}, {"RiskDate": "string"}, {"RiskBusiness": "string"}, {"RiskLimit": "decimal"}, {"RiskOutstanding": "decimal"}, {"RiskNPL": "decimal"}, {"RiskNPLOUT": "decimal"}, {"RiskCeiling": "decimal"}, {"RiskLimitNonFL": "decimal"}, {"RiskAddLimitAble": "decimal"}, {"ReturnReasonCode": "integer"}, {"ReturnReasonName": "string"}, {"RejectRem": "string"}, {"DeptAnalystFirstCode": "string"}, {"DeptAnalystFirstName": "string"}, {"DDObj": "string"}, {"ConditionContract": "string"}, {"ConditionDrawDown": "string"}, {"CollateralTCG": "string"}, {"CollateralGur": "string"}, {"PNDays": "integer"}, {"FEEDetail": "string"}, {"AuthorizeDate": "string"}, {"AuthorizeCode": "string"}, {"ScheduleRate": "string"}, {"AF_IndustryType": "string"}]}, {"data": [["AP69000004282", "2026-03-11: 10:57:08", "บริษัท ทีม เทค ทราฟฟิค จำกัด", "Y", "0215564003142", "เลขที่ 88 ถ.บ้านบึง-แกลง ต.ทางเกวียน อ.แกลง จ.ระยอง 21110", "", "33a2da938d02234b438c8992b257e0a02281c11f60542499b7d8161f4e7e2e4231bbdfe8bb8a97e910e2a0b465ee4c387c965cd6c3bd779ca8260f20405a3426f99ff3674b90a19e8f3c30fbea3670be3ad8cd43fc29239ced87ad2c1d4f0cdb63adc6f8b02f61c06d9c6a6874ccdf3000ab2052e1930517d4f2a4f549c896a7ac2c879afc727695881c7ff9751c0c3b02b75cfeb263e2ecf8ac6414eda5bb18c38620330892f6719dee62c3e7ed4087", "", "", "", "", "", "", "", "ทางเกวียน", "แกลง", "25", "ระยอง", "", "210301", "21110", "b6c744facce22f1ed112a4fdbb38deefb8cfd165fa4aa550df3b2f81d0613b358629f54a3cdbbe8a78e932b859fb43fb364b197015df2990c0bcabb88a936c2f4d4a022f09e9036d033d6a2b1e7f1cda03ac26739f16728cc2eb3b50d236596c44554f43deeb4068645d330e7a6a1f9159cca7eea37253481e23d21310ff38421c21b0f3e246e8eabb7b45ca5a9f5997e4d8516b704790d6897df92012680356ec22cff205e1c3472b62272e4fe6ee84", "0627199456", "0895430444", 10000000, 10000000, "", "2021-03-25", "F439090", "กิจกรรมการก่อสร้างเฉพาะด้านอื่นๆ ซึ่งมิได้จัดประเภทไว้ในที่อื่น", 4, 0, null, null, 4, 11, 4, 11, 99606479, 99060479, 1, "Y", 15, 1, "Y", 85, 30, 0, "", 0, 1, "Y", 100, 60, 5325780.59, 2444692, 7381823.84, null, null, null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, 16000000, 33801298, 49801298, 5.82, 1.34, 1, "Y", 1, "2026-02-02", "NO", 0, "N", "Y", 47201805, 29895085, 879249, null, null, null, null, null, null, "", 0, null, null, null, null, "2202", "สาขาระยอง", "", "", "", "", "", "", "", "", null, null, null, null, "", null, null, 0, null, 0, null, 0, null, null, 134468747, 100, 21333130, 15.86, 5562592, 4.14, 1449609, 1.08, 10597437, 3993101, 0, 0, null, 0, 0, null, 0, 0, null, 0, 0, null, 0, null, 0, null, null, null, null, null, null, null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, null, null, null, null, null, null, 0, null, null, null, null, "F"]]}]}, {"name": "Condition1_", "value": 3}, {"name": "Condition2_", "value": 3}, {"name": "Condition3_", "value": 3}, {"name": "Condition4_", "value": 1}, {"name": "Condition5_", "value": 1}, {"name": "Condition6_", "value": 3}, {"name": "Capital1_", "value": 5}, {"name": "Capital2_", "value": 1}, {"name": "Capital3_", "value": 3}, {"name": "Capital4_", "value": 4}, {"name": "Capital5_", "value": 3}, {"name": "Capacity1_", "value": 1}, {"name": "Capacity2_", "value": 2}, {"name": "Capacity3_", "value": 1}, {"name": "Capacity4_", "value": 1}, {"name": "Capacity5_", "value": 3}, {"name": "Capacity6_", "value": 2}, {"name": "Capacity7_", "value": 3}, {"name": "Capacity8_", "value": 3}, {"name": "Character1_", "value": 4}, {"name": "Character2_", "value": 5}, {"name": "Character3_", "value": 5}, {"name": "Character4_", "value": 2}, {"name": "Character5_", "value": 2}, {"name": "Character6_", "value": 5}, {"name": "Character7_", "value": 5}, {"name": "Collateral1_", "value": 1}, {"name": "Collateral2_", "value": 1}, {"name": "Collateral3_", "value": 1}]}};
+</script>
+<script>
+/* ============================ shared model ============================ */
+const ENGINE_BASE = "https://productionengine.smebank.local/microanalyticScore/modules/";
+const SEGMENTS = [
+  {value:"MICRO",      label:"MICRO"},
+  {value:"SME-LOWER",  label:"SME-LOWER"},
+  {value:"SME-M",      label:"SME-MEDIUM"},
+  {value:"SME-L",      label:"SME-LARGE"},
+  {value:"SME-UPPER1", label:"SME-UPPER1"},
+  {value:"SME-UPPER2", label:"SME-UPPER2"},
+];
+// which app types each segment allows (MICRO: CA1/CA2 ; SME: CA2 only)
+function appTypesFor(seg){ return seg==="MICRO" ? ["CA1","CA2"] : ["CA2"]; }
+function moduleFor(seg, ca){
+  if(seg==="MICRO") return ca==="CA1" ? "ascore_ca1_v1" : "ascore_ca2_v1";
+  if(seg==="SME-LOWER")  return "ascore_lower_ca2_v1";
+  if(seg==="SME-UPPER1") return "ascore_upper1_ca2_v1";
+  return "ascore_upper2ml_v1"; // SME-M / SME-L / SME-UPPER2
+}
+function urlFor(seg, ca){ return ENGINE_BASE + moduleFor(seg,ca) + "/steps/execute"; }
+function has5C(ca){ return ca==="CA2"; }
+
+// top-level input name  ->  AF_Quantitative column name (for auto-sync)
+const SYNC_MAP = {
+  "CustomerInstallment_":  "Installment",
+  "CustomerTermYear_":     "TermYear",
+  "CustomerICR_":          "ICR",
+  "CustomerDSCR_":         "DSCR",
+  "CustomerObjCodeDetail_":"ObjCodeDetail",
+  "CustomerIndustryType_": "AF_IndustryType",
+};
+
+// key fields shown in builder: [inputName, label, type, hint]
+const KEY_FIELDS = [
+  ["RegisNo_",            "RegisNo (เลขทะเบียน)", "text",   ""],
+  ["_ApplNo",             "ApplNo (เลขที่คำขอ)",  "text",   "อยู่ในแถว AF_Quantitative"],
+  ["CusType_",            "CusType",              "text",   ""],
+  ["NCBScore_",           "NCB Score",            "int",    ""],
+  ["NCBScoreGrade_",      "NCB Grade",            "text",   ""],
+  ["CustomerInstallment_","Installment (ค่างวด)", "float",  "sync ↔ AF"],
+  ["CustomerIndustryType_","Industry Type",       "text",   "sync ↔ AF"],
+  ["CustomerObjCodeDetail_","วัตถุประสงค์ (ObjCodeDetail)","text","sync ↔ AF"],
+  ["CustomerTermYear_",   "Term (ปี)",            "int",    "sync ↔ AF"],
+  ["CustomerICR_",        "ICR",                  "float",  "sync ↔ AF"],
+  ["CustomerDSCR_",       "DSCR",                 "float",  "sync ↔ AF"],
+  ["_IncomePerYear",      "IncomePerYear (รายได้/ปี)","float","AF · optional"],
+  ["_Limit",              "Limit (วงเงิน)",       "float",  "AF · optional"],
+];
+const FIVEC = {
+  Condition:6, Capital:5, Capacity:8, Character:7, Collateral:3
+};
+const RISK_STYLE = {
+  "Red":    ["#C00000","#fff"], "Orange":["#FF7000","#fff"],
+  "Yellow": ["#FFD700","#000"], "Green": ["#70AD47","#fff"], "Green ":["#70AD47","#fff"],
+};
+const RESULT_STYLE = {
+  "Approve":               ["#C6EFCE","#276221"],
+  "Approve with condition":["#FFF2CC","#7f6000"],
+  "Reject":                ["#FFC7CE","#9C0006"],
+};
+
+/* ============================ helpers ============================ */
+const $ = s => document.querySelector(s);
+function el(tag, cls, html){ const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+function esc(s){ return String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function toast(msg){ const t=$("#toast"); t.textContent=msg||"คัดลอกแล้ว"; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1400); }
+async function copyText(txt){
+  try{ await navigator.clipboard.writeText(txt); toast("คัดลอกแล้ว ✓"); }
+  catch(e){
+    const ta=el("textarea"); ta.value=txt; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast("คัดลอกแล้ว ✓"); }catch(_){ toast("คัดลอกไม่สำเร็จ"); }
+    document.body.removeChild(ta);
+  }
+}
+function inputVal(inputs, name){ const i=inputs.find(x=>x.name===name); return i?i.value:undefined; }
+function afTable(inputs){
+  const af = inputs.find(x=>x.name==="AF_Quantitative_");
+  if(!af||!af.value) return null;
+  const cols = af.value[0].metadata.map(m=>Object.keys(m)[0]);
+  const row  = (af.value[1] && af.value[1].data && af.value[1].data[0]) || [];
+  return {af, cols, row};
+}
+
+/* ============================ tabs ============================ */
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  $("#panel-"+t.dataset.tab).classList.add("active");
+}));
+
+/* ============================ READER ============================ */
+function splitLog(text){
+  // returns {reqText, resText, url}
+  let reqText=null, resText=null, url="";
+  const reqMark = text.indexOf("***REQUEST***");
+  const resMark = text.indexOf("***RESPONSE***");
+  if(reqMark>=0 || resMark>=0){
+    if(reqMark>=0){
+      const after = text.slice(reqMark+13);
+      const end = after.indexOf("***RESPONSE***");
+      reqText = (end>=0? after.slice(0,end): after).trim();
+    }
+    if(resMark>=0){
+      let after = text.slice(resMark+14);
+      const um = after.match(/^\s*\[([^\]]+)\]/);
+      if(um){ url=um[1].trim(); after=after.slice(after.indexOf("]")+1); }
+      after = after.replace(/^[\s*]+/,"");   // strip ***** separator line
+      resText = after.trim();
+    }
+    return {reqText,resText,url};
+  }
+  return null;
+}
+function tryJSON(s){ if(!s)return null; try{return JSON.parse(s.trim());}catch(e){return null;} }
+
+function parseReader(){
+  const raw = $("#readerInput").value;
+  const errEl=$("#readerErr"); errEl.classList.remove("show");
+  $("#readerOut").innerHTML="";
+  if(!raw.trim()){ showErr("กรุณาวางข้อมูลก่อน"); return; }
+
+  let req=null, res=null, url="";
+  const split = splitLog(raw);
+  if(split){
+    req = tryJSON(split.reqText);
+    res = tryJSON(split.resText);
+    url = split.url;
+    if(!req && !res){ showErr("พบ marker แต่ parse JSON ไม่สำเร็จ — ตรวจว่า JSON สมบูรณ์"); return; }
+  } else {
+    const j = tryJSON(raw);
+    if(!j){ showErr("ไม่ใช่ JSON ที่ถูกต้อง และไม่พบ marker ***REQUEST***/***RESPONSE***"); return; }
+    if(j.inputs) req=j;
+    else if(j.outputs || j.moduleId) res=j;
+    else { showErr("JSON ไม่มี field \"inputs\" หรือ \"outputs\" — ไม่แน่ใจว่าเป็น request หรือ response"); return; }
+  }
+  renderReader(req,res,url);
+  function showErr(m){ errEl.textContent="⚠ "+m; errEl.classList.add("show"); }
+}
+
+function renderReader(req,res,url){
+  const out=$("#readerOut");
+  const grid=el("div","grid2");
+  if(req) grid.appendChild(renderRequest(req));
+  if(res) grid.appendChild(renderResponse(res,url));
+  out.appendChild(grid);
+}
+
+function renderRequest(req){
+  const inputs=req.inputs||[];
+  const card=el("div","card");
+  card.appendChild(el("h2",null,"📥 REQUEST — ข้อมูลที่ส่งเข้า"));
+  const seg=inputVal(inputs,"Segment_"), ca=inputVal(inputs,"ApplicationType_");
+  // identity + key inputs
+  const rows=[
+    ["RegisNo", inputVal(inputs,"RegisNo_")],
+    ["Segment", seg],
+    ["ApplicationType", ca],
+    ["Module (คำนวณ)", seg&&ca? `<span class="modchip">${moduleFor(seg,ca)}</span>`:"—"],
+    ["CusType", inputVal(inputs,"CusType_")],
+    ["NCB Score", inputVal(inputs,"NCBScore_")],
+    ["NCB Grade", inputVal(inputs,"NCBScoreGrade_")],
+    ["Installment", fmt(inputVal(inputs,"CustomerInstallment_"))],
+    ["Industry Type", inputVal(inputs,"CustomerIndustryType_")],
+    ["วัตถุประสงค์", inputVal(inputs,"CustomerObjCodeDetail_")],
+    ["Term (ปี)", inputVal(inputs,"CustomerTermYear_")],
+    ["ICR", inputVal(inputs,"CustomerICR_")],
+    ["DSCR", inputVal(inputs,"CustomerDSCR_")],
+  ];
+  card.appendChild(kvTable(rows));
+
+  // 5C
+  const groups={};
+  inputs.forEach(i=>{ const m=/^(Condition|Capital|Capacity|Character|Collateral)(\d+)_$/.exec(i.name); if(m){ (groups[m[1]]=groups[m[1]]||[]).push([m[2],i.value]); }});
+  if(Object.keys(groups).length){
+    card.appendChild(el("h2",null,"คะแนน 5C"));
+    const box=el("div","fivec");
+    Object.entries(groups).forEach(([g,arr])=>{
+      arr.sort((a,b)=>+a[0]-+b[0]);
+      const d=el("div","grp"); d.appendChild(el("h4",null,g));
+      arr.forEach(([n,v])=>{ const r=el("div","row"); r.appendChild(el("label",null,g+n)); r.appendChild(el("span",null,`<b>${esc(v)}</b>`)); d.appendChild(r); });
+      box.appendChild(d);
+    });
+    card.appendChild(box);
+  }
+
+  // AF_Quantitative
+  const t=afTable(inputs);
+  if(t){
+    card.appendChild(el("h2",null,"AF_Quantitative — งบการเงิน/กิจการ"));
+    const keyCols=["ApplNo","TransDate","RegisName","IncomePerYear","IncomeFromOperationPerYear","Limit","Installment","TermYear","ICR","DSCR","NCBTotalLimitAmt","NCBTotalOutstanding","AF_IndustryType"];
+    const rows2=keyCols.map(c=>{ const idx=t.cols.indexOf(c); return [c, idx>=0? fmt(t.row[idx]) : "—"]; });
+    card.appendChild(kvTable(rows2));
+    // full table
+    const det=el("details","raw"); det.appendChild(el("summary",null,`ดูทั้งหมด ${t.cols.length} คอลัมน์`));
+    const wrap=el("div","full-wrap"); const tb=el("table","full");
+    const thead=el("tr"); thead.appendChild(el("th",null,"#")); thead.appendChild(el("th",null,"คอลัมน์")); thead.appendChild(el("th",null,"ค่า"));
+    tb.appendChild(thead);
+    t.cols.forEach((c,i)=>{ const tr=el("tr"); tr.appendChild(el("td",null,i)); tr.appendChild(el("td",null,esc(c))); tr.appendChild(el("td",null,esc(fmt(t.row[i])))); tb.appendChild(tr); });
+    wrap.appendChild(tb); det.appendChild(wrap); card.appendChild(det);
+  }
+  return card;
+}
+
+function renderResponse(res,url){
+  const outs=res.outputs||[];
+  const get=n=>{ const o=outs.find(x=>x.name===n); return o?o.value:undefined; };
+  const card=el("div","card");
+  card.appendChild(el("h2",null,"📤 RESPONSE — ผลการประเมิน"));
+
+  // result badge
+  const rr=get("RiskResult");
+  if(rr!=null){
+    const st=RESULT_STYLE[rr]||["#eee","#333"];
+    const b=el("div"); b.style.marginBottom="12px";
+    b.innerHTML=`ผลสรุป: <span class="badge" style="background:${st[0]};color:${st[1]};font-size:15px">${esc(rr)}</span>`;
+    card.appendChild(b);
+  }
+  // scores
+  const sc=el("div","scorecards");
+  [["Quantitative","QuantitativeScore"],["Qualitative","QualitativeScore"],["Total","TotalScore"]].forEach(([l,k])=>{
+    const v=get(k); const box=el("div","scorebox");
+    box.innerHTML=`<div class="n">${v==null?"—":fmt(v)}</div><div class="l">${l}</div>`;
+    sc.appendChild(box);
+  });
+  card.appendChild(sc);
+
+  // risk dims
+  const dims=[["Financial","RiskFinancial"],["Non-Financial","RiskNonFinancial"],["Condition","RiskCondition"],["Capital","RiskCapital"],["Capacity","RiskCapacity"],["Character","RiskCharacter"],["Collateral","RiskCollateral"]];
+  const rg=el("div","riskgrid");
+  dims.forEach(([l,k])=>{ const v=get(k); if(v===undefined)return;
+    const st=RISK_STYLE[v]||["#eef1f5","#333"];
+    const box=el("div","riskbox");
+    box.innerHTML=`<div class="lbl">${l}</div><span class="risk-cell" style="background:${st[0]};color:${st[1]}">${esc(v||"—")}</span>`;
+    rg.appendChild(box);
+  });
+  card.appendChild(rg);
+
+  // flags & meta
+  const meta=[
+    ["Module ID", get("moduleId")||res.moduleId||"—"],
+    ["Invalid Factor", boolBadge(get("isInvalidFactor"))],
+    ["Exclude NCB Grade", boolBadge(get("isExcludeNCBScoreGrade"))],
+    ["Target Product", get("TargetProductAndGrade")||"—"],
+    ["Scoring Date", get("ScoringDate")||"—"],
+    ["Endpoint URL", url? `<span style="font-size:11px;word-break:break-all">${esc(url)}</span>`:"—"],
+  ];
+  card.appendChild(el("h2",null,"รายละเอียด"));
+  card.appendChild(kvTable(meta));
+
+  // AF_Score table
+  const afs=get("AF_Score");
+  if(afs && afs[0] && afs[0].metadata){
+    const cols=afs[0].metadata.map(m=>Object.keys(m)[0]);
+    const data=(afs[1]&&afs[1].data)||[];
+    card.appendChild(el("h2",null,"AF_Score"));
+    data.forEach((row,ri)=>{
+      if(row.length!==cols.length){
+        card.appendChild(el("div","note",`⚠ แถวที่ ${ri+1}: จำนวนค่า (${row.length}) ไม่ตรงกับคอลัมน์ (${cols.length}) — พบใน module <b>ascore_ca2_v1</b> (Micro CA2) ที่ค่าสีเกินมาหน้าสุด แสดงเป็นค่าดิบตามตำแหน่ง`));
+      }
+      const rows=cols.map((c,i)=>[c, esc(fmt(row[i]))]);
+      if(row.length>cols.length){ for(let i=cols.length;i<row.length;i++) rows.push([`(เกิน #${i})`, esc(fmt(row[i]))]); }
+      card.appendChild(kvTable(rows));
+    });
+  }
+  return card;
+}
+
+function boolBadge(v){
+  if(v==null) return "—";
+  const s=String(v).toUpperCase();
+  if(s==="TRUE")  return `<span class="badge" style="background:#FFC7CE;color:#9C0006">TRUE</span>`;
+  if(s==="FALSE") return `<span class="badge" style="background:#C6EFCE;color:#276221">FALSE</span>`;
+  return esc(v);
+}
+function kvTable(rows){
+  const t=el("table","kv");
+  rows.forEach(([k,v])=>{ const tr=el("tr"); tr.appendChild(el("td","k",esc(k))); const td=el("td","v"); td.innerHTML=(v==null||v==="")?"—":v; tr.appendChild(td); t.appendChild(tr); });
+  return t;
+}
+function fmt(v){
+  if(v==null) return "";
+  if(typeof v==="number"){ return Number.isInteger(v)? v.toLocaleString("en-US") : v.toLocaleString("en-US",{maximumFractionDigits:6}); }
+  return v;
+}
+
+$("#btnParse").addEventListener("click",parseReader);
+$("#btnClearReader").addEventListener("click",()=>{ $("#readerInput").value=""; $("#readerOut").innerHTML=""; $("#readerErr").classList.remove("show"); });
+$("#btnSample").addEventListener("click",()=>{ if(BASE_TEMPLATES){ $("#readerInput").value="***REQUEST***\n"+JSON.stringify(BASE_TEMPLATES["SME-L|CA2"],null,2); parseReader(); }});
+
+/* ============================ BUILDER ============================ */
+function initBuilder(){
+  const segSel=$("#bSegment");
+  SEGMENTS.forEach(s=>{ const o=el("option"); o.value=s.value; o.textContent=s.label; segSel.appendChild(o); });
+  segSel.addEventListener("change",onSegChange);
+  $("#bAppType").addEventListener("change",onComboChange);
+  buildKeyFields();
+  build5C();
+  onSegChange();
+  $("#btnBuild").addEventListener("click",buildPayload);
+  $("#btnCopyPayload").addEventListener("click",()=>{ const v=$("#bOutput").value; if(v.trim()) copyText(v); else toast("ยังไม่มี payload"); });
+  $("#btnCopyUrl").addEventListener("click",()=>copyText($("#bUrl").textContent));
+  $("#bMinify").addEventListener("change",()=>{ if($("#bOutput").value.trim()) buildPayload(); });
+}
+function onSegChange(){
+  const seg=$("#bSegment").value; const caSel=$("#bAppType");
+  const cur=caSel.value;
+  caSel.innerHTML="";
+  appTypesFor(seg).forEach(c=>{ const o=el("option"); o.value=c; o.textContent=c; caSel.appendChild(o); });
+  if(appTypesFor(seg).includes(cur)) caSel.value=cur;
+  onComboChange();
+}
+function onComboChange(){
+  const seg=$("#bSegment").value, ca=$("#bAppType").value;
+  $("#bModule").textContent=moduleFor(seg,ca);
+  $("#bUrl").textContent=urlFor(seg,ca);
+  $("#b5cCard").style.display = has5C(ca) ? "" : "none";
+  $("#bFlag").textContent = has5C(ca) ? "โหมด CA2 · มี 5C + Qualitative" : "โหมด CA1 · quantitative ล้วน (ไม่มี 5C)";
+  prefillFromTemplate();
+}
+function buildKeyFields(){
+  const box=$("#bKeyFields"); box.innerHTML="";
+  KEY_FIELDS.forEach(([name,label,type,hint])=>{
+    const f=el("div","field");
+    f.innerHTML=`<label>${label} ${hint?`<span class="hint">· ${hint}</span>`:""}</label>`;
+    const inp=el("input"); inp.id="kf_"+name; inp.dataset.type=type;
+    if(type==="int"||type==="float") inp.type="number";
+    f.appendChild(inp); box.appendChild(f);
+  });
+}
+function build5C(){
+  const box=$("#b5c"); box.innerHTML="";
+  Object.entries(FIVEC).forEach(([g,n])=>{
+    const d=el("div","grp"); d.appendChild(el("h4",null,g+` (×${n})`));
+    for(let i=1;i<=n;i++){ const r=el("div","row");
+      r.appendChild(el("label",null,g+i));
+      const inp=el("input"); inp.type="number"; inp.id="c5_"+g+i; r.appendChild(inp); d.appendChild(r);
+    }
+    box.appendChild(d);
+  });
+}
+function currentTemplate(){
+  const seg=$("#bSegment").value, ca=$("#bAppType").value;
+  const key=seg+"|"+ca;
+  return BASE_TEMPLATES && (BASE_TEMPLATES[key]||null);
+}
+function prefillFromTemplate(){
+  const tpl=currentTemplate(); if(!tpl) return;
+  const inputs=tpl.inputs;
+  const t=afTable(inputs);
+  const afGet=c=>{ if(!t)return undefined; const i=t.cols.indexOf(c); return i>=0? t.row[i]:undefined; };
+  KEY_FIELDS.forEach(([name])=>{
+    const inp=$("#kf_"+name); if(!inp) return;
+    let v;
+    if(name==="_ApplNo")            v=afGet("ApplNo");
+    else if(name==="_IncomePerYear")v=afGet("IncomePerYear");
+    else if(name==="_Limit")        v=afGet("Limit");
+    else                            v=inputVal(inputs,name);
+    inp.value = v==null? "" : v;
+  });
+  // 5C
+  Object.entries(FIVEC).forEach(([g,n])=>{ for(let i=1;i<=n;i++){ const inp=$("#c5_"+g+i); if(inp){ const v=inputVal(inputs,g+i+"_"); inp.value=v==null?"":v; } }});
+}
+function coerce(type,val){
+  if(val===""||val==null) return "";
+  if(type==="int")   { const n=parseInt(val,10);   return isNaN(n)?val:n; }
+  if(type==="float") { const n=parseFloat(val);     return isNaN(n)?val:n; }
+  return val;
+}
+function buildPayload(){
+  const tpl=currentTemplate();
+  if(!tpl){ toast("ไม่มี template สำหรับเคสนี้"); return; }
+  const seg=$("#bSegment").value, ca=$("#bAppType").value;
+  const payload=JSON.parse(JSON.stringify(tpl)); // deep clone
+  const inputs=payload.inputs;
+  const setInput=(name,val)=>{ const i=inputs.find(x=>x.name===name); if(i) i.value=val; };
+
+  // segment + apptype
+  setInput("Segment_",seg); setInput("ApplicationType_",ca);
+
+  // AF row + col map
+  const t=afTable(inputs);
+  const afSet=(col,val)=>{ if(!t)return; const idx=t.cols.indexOf(col); if(idx>=0) t.row[idx]=val; };
+
+  // key fields
+  KEY_FIELDS.forEach(([name,label,type])=>{
+    const inp=$("#kf_"+name); if(!inp) return;
+    const raw=inp.value;
+    if(name==="_ApplNo"){ if(raw!=="") afSet("ApplNo",raw); return; }
+    if(name==="_IncomePerYear"){ if(raw!=="") afSet("IncomePerYear",coerce("float",raw)); return; }
+    if(name==="_Limit"){ if(raw!=="") afSet("Limit",coerce("float",raw)); return; }
+    const val=coerce(type,raw);
+    setInput(name,val);
+    // auto-sync to AF column if mapped
+    if(SYNC_MAP[name]!==undefined && raw!=="") afSet(SYNC_MAP[name], val);
+  });
+
+  // 5C (only when present in template)
+  if(has5C(ca)){
+    Object.entries(FIVEC).forEach(([g,n])=>{ for(let i=1;i<=n;i++){ const inp=$("#c5_"+g+i); if(!inp)return; const raw=inp.value; if(raw!=="") setInput(g+i+"_",coerce("int",raw)); }});
+  }
+
+  const minify=$("#bMinify").checked;
+  const txt=JSON.stringify(payload, null, minify?0:2);
+  $("#bOutput").value=txt;
+  $("#bSize").textContent=`${(new Blob([txt]).size/1024).toFixed(1)} KB · module ${moduleFor(seg,ca)}`;
+}
+
+initBuilder();
+</script>
+</body>
+</html>

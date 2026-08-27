@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRA Payload Tool</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#fff; --ink:#1f2733; --muted:#6b7685; --line:#dfe4ec;
+    --brand:#1f4e79; --brand2:#2e75b6; --req:#1a6b2f; --res:#843c0c;
+    --green:#70AD47; --yellow:#FFD700; --orange:#FF7000; --red:#C00000;
+    --approve-bg:#C6EFCE; --approve-fg:#276221; --reject-bg:#FFC7CE; --reject-fg:#9C0006;
+    --cond-bg:#FFF2CC; --cond-fg:#7f6000;
+    --radius:10px; --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Tahoma,"Sarabun",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+  header{background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff;padding:16px 22px;box-shadow:var(--shadow)}
+  header h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.2px}
+  header p{margin:3px 0 0;font-size:12.5px;opacity:.85}
+  .wrap{max-width:1220px;margin:0 auto;padding:18px}
+  .tabs{display:flex;gap:6px;margin:16px 0 4px}
+  .tab{padding:9px 20px;border:1px solid var(--line);background:var(--card);border-radius:999px;cursor:pointer;font-weight:600;color:var(--muted);user-select:none}
+  .tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .panel{display:none}
+  .panel.active{display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:16px}
+  .card h2{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:var(--brand2);border-bottom:2px solid var(--line);padding-bottom:7px}
+  textarea{width:100%;min-height:150px;font-family:"Cascadia Code",Consolas,monospace;font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:11px;resize:vertical;background:#fbfcfe;color:var(--ink)}
+  textarea:focus,input:focus,select:focus{outline:2px solid var(--brand2);outline-offset:-1px}
+  button{cursor:pointer;border:none;border-radius:8px;padding:9px 18px;font-weight:600;font-size:13.5px;font-family:inherit}
+  .btn-primary{background:var(--brand);color:#fff}
+  .btn-primary:hover{background:#163a5c}
+  .btn-ghost{background:#eef2f7;color:var(--ink)}
+  .btn-ghost:hover{background:#e2e8f0}
+  .btn-copy{background:var(--green);color:#fff}
+  .btn-copy:hover{filter:brightness(.94)}
+  .btnrow{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:11px}
+  .err{background:var(--reject-bg);color:var(--reject-fg);border:1px solid #f1a9b0;border-radius:8px;padding:9px 12px;margin-top:10px;font-weight:600;display:none}
+  .err.show{display:block}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:900px){.grid2{grid-template-columns:1fr}}
+  table.kv{width:100%;border-collapse:collapse}
+  table.kv td{padding:5px 8px;border-bottom:1px solid #eef1f5;vertical-align:top}
+  table.kv td.k{color:var(--muted);width:42%;font-weight:600}
+  table.kv td.v{font-family:"Cascadia Code",Consolas,monospace;word-break:break-word}
+  .badge{display:inline-block;padding:3px 12px;border-radius:999px;font-weight:700;font-size:13px}
+  .risk-cell{display:inline-block;min-width:64px;text-align:center;padding:3px 10px;border-radius:6px;font-weight:700;font-size:12.5px}
+  .riskgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .riskbox{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fbfcfe}
+  .riskbox .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+  .scorecards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+  .scorebox{border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;background:linear-gradient(180deg,#fff,#f7f9fc)}
+  .scorebox .n{font-size:24px;font-weight:800;color:var(--brand)}
+  .scorebox .l{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .fields{display:grid;grid-template-columns:repeat(2,1fr);gap:11px 16px}
+  @media(max-width:700px){.fields{grid-template-columns:1fr}.scorecards{grid-template-columns:1fr}}
+  .field{display:flex;flex-direction:column;gap:3px}
+  .field label{font-size:12px;font-weight:600;color:var(--muted)}
+  .field .hint{font-size:10.5px;color:#9aa4b1;font-weight:400}
+  input,select{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:13.5px;font-family:inherit;background:#fbfcfe;color:var(--ink)}
+  .fivec{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+  .fivec .grp{border:1px solid var(--line);border-radius:9px;padding:11px 12px}
+  .fivec .grp h4{margin:0 0 9px;font-size:12.5px;color:var(--req);border-bottom:1px dashed var(--line);padding-bottom:5px}
+  .fivec .row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .fivec .row label{font-size:12px;color:var(--muted)}
+  .fivec .row input{width:66px;text-align:center;padding:5px}
+  .urlbox{background:#0d2438;color:#8fd3ff;font-family:"Cascadia Code",Consolas,monospace;font-size:12px;padding:10px 12px;border-radius:8px;word-break:break-all;margin-top:6px}
+  .modchip{display:inline-block;background:var(--brand2);color:#fff;padding:2px 10px;border-radius:6px;font-family:monospace;font-size:12px;font-weight:700}
+  details.raw{margin-top:12px}
+  details.raw summary{cursor:pointer;font-weight:600;color:var(--brand2);font-size:12.5px}
+  table.full{width:100%;border-collapse:collapse;margin-top:9px;font-size:11.5px}
+  table.full td,table.full th{border:1px solid #e6eaf0;padding:3px 7px;text-align:left}
+  table.full th{background:#f0f3f8;position:sticky;top:0}
+  .full-wrap{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+  .note{background:#fff8e6;border:1px solid #ffe1a3;color:#7a5b00;border-radius:8px;padding:8px 11px;font-size:12.5px;margin-top:10px}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#1f2733;color:#fff;padding:11px 22px;border-radius:999px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;box-shadow:var(--shadow);z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .out-json{min-height:270px}
+  .muted-small{font-size:11.5px;color:var(--muted);margin-top:4px}
+  .seg-flag{font-size:11.5px;color:var(--muted)}
+  .switch{display:flex;gap:7px;align-items:center;font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏦 CRA Payload Tool <span style="font-weight:400;font-size:14px;opacity:.8">— SME Credit Scoring</span></h1>
+  <p>อ่าน payload ให้เข้าใจง่าย · สร้าง payload ที่ยิงได้จริงจากฟอร์ม · คัดลอกได้ในคลิกเดียว</p>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <div class="tab active" data-tab="reader">📖 อ่าน payload</div>
+    <div class="tab" data-tab="builder">🛠️ สร้าง payload</div>
+  </div>
+
+  <!-- ============ READER ============ -->
+  <div class="panel active" id="panel-reader">
+    <div class="card">
+      <h2>วาง payload / log</h2>
+      <textarea id="readerInput" placeholder="วางได้ทั้ง: ไฟล์ .log เต็ม (มี ***REQUEST*** / ***RESPONSE***), หรือ request JSON เดี่ยว, หรือ response JSON เดี่ยว — ระบบตรวจชนิดให้อัตโนมัติ"></textarea>
+      <div class="btnrow">
+        <button class="btn-primary" id="btnParse">แปลง / อ่าน</button>
+        <button class="btn-ghost" id="btnClearReader">ล้าง</button>
+        <button class="btn-ghost" id="btnSample">ใส่ตัวอย่าง</button>
+      </div>
+      <div class="err" id="readerErr"></div>
+    </div>
+    <div id="readerOut"></div>
+  </div>
+
+  <!-- ============ BUILDER ============ -->
+  <div class="panel" id="panel-builder">
+    <div class="card">
+      <h2>เลือกประเภทเคส</h2>
+      <div class="fields" style="grid-template-columns:repeat(3,1fr)">
+        <div class="field">
+          <label>Segment</label>
+          <select id="bSegment"></select>
+        </div>
+        <div class="field">
+          <label>Application Type</label>
+          <select id="bAppType"></select>
+        </div>
+        <div class="field">
+          <label>Module (คำนวณอัตโนมัติ)</label>
+          <div style="padding-top:7px"><span class="modchip" id="bModule">—</span></div>
+        </div>
+      </div>
+      <div class="urlbox" id="bUrl">—</div>
+      <div class="btnrow">
+        <button class="btn-copy" id="btnCopyUrl">📋 คัดลอก URL</button>
+        <span class="seg-flag" id="bFlag"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>ฟิลด์สำคัญ</h2>
+      <div class="fields" id="bKeyFields"></div>
+    </div>
+
+    <div class="card" id="b5cCard">
+      <h2>คะแนน 5C (Qualitative)</h2>
+      <div class="fivec" id="b5c"></div>
+    </div>
+
+    <div class="card">
+      <h2>ผลลัพธ์ payload</h2>
+      <div class="btnrow" style="margin:0 0 10px">
+        <button class="btn-primary" id="btnBuild">สร้าง payload</button>
+        <label class="switch"><input type="checkbox" id="bMinify"> minify (บรรทัดเดียว)</label>
+      </div>
+      <textarea class="out-json" id="bOutput" placeholder="กด &quot;สร้าง payload&quot; แล้ว JSON ที่ยิงได้จริงจะปรากฏที่นี่"></textarea>
+      <div class="btnrow">
+        <button class="btn-copy" id="btnCopyPayload">📋 คัดลอก payload</button>
+        <span class="muted-small" id="bSize"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">คัดลอกแล้ว</div>
+
+<script>
+const BASE_TEMPLATES = /*__BASE_TEMPLATES__*/ null;
+</script>
+<script>
+/* ============================ shared model ============================ */
+const ENGINE_BASE = "https://productionengine.smebank.local/microanalyticScore/modules/";
+const SEGMENTS = [
+  {value:"MICRO",      label:"MICRO"},
+  {value:"SME-LOWER",  label:"SME-LOWER"},
+  {value:"SME-M",      label:"SME-MEDIUM"},
+  {value:"SME-L",      label:"SME-LARGE"},
+  {value:"SME-UPPER1", label:"SME-UPPER1"},
+  {value:"SME-UPPER2", label:"SME-UPPER2"},
+];
+// which app types each segment allows (MICRO: CA1/CA2 ; SME: CA2 only)
+function appTypesFor(seg){ return seg==="MICRO" ? ["CA1","CA2"] : ["CA2"]; }
+function moduleFor(seg, ca){
+  if(seg==="MICRO") return ca==="CA1" ? "ascore_ca1_v1" : "ascore_ca2_v1";
+  if(seg==="SME-LOWER")  return "ascore_lower_ca2_v1";
+  if(seg==="SME-UPPER1") return "ascore_upper1_ca2_v1";
+  return "ascore_upper2ml_v1"; // SME-M / SME-L / SME-UPPER2
+}
+function urlFor(seg, ca){ return ENGINE_BASE + moduleFor(seg,ca) + "/steps/execute"; }
+function has5C(ca){ return ca==="CA2"; }
+
+// top-level input name  ->  AF_Quantitative column name (for auto-sync)
+const SYNC_MAP = {
+  "CustomerInstallment_":  "Installment",
+  "CustomerTermYear_":     "TermYear",
+  "CustomerICR_":          "ICR",
+  "CustomerDSCR_":         "DSCR",
+  "CustomerObjCodeDetail_":"ObjCodeDetail",
+  "CustomerIndustryType_": "AF_IndustryType",
+};
+
+// key fields shown in builder: [inputName, label, type, hint]
+const KEY_FIELDS = [
+  ["RegisNo_",            "RegisNo (เลขทะเบียน)", "text",   ""],
+  ["_ApplNo",             "ApplNo (เลขที่คำขอ)",  "text",   "อยู่ในแถว AF_Quantitative"],
+  ["CusType_",            "CusType",              "text",   ""],
+  ["NCBScore_",           "NCB Score",            "int",    ""],
+  ["NCBScoreGrade_",      "NCB Grade",            "text",   ""],
+  ["CustomerInstallment_","Installment (ค่างวด)", "float",  "sync ↔ AF"],
+  ["CustomerIndustryType_","Industry Type",       "text",   "sync ↔ AF"],
+  ["CustomerObjCodeDetail_","วัตถุประสงค์ (ObjCodeDetail)","text","sync ↔ AF"],
+  ["CustomerTermYear_",   "Term (ปี)",            "int",    "sync ↔ AF"],
+  ["CustomerICR_",        "ICR",                  "float",  "sync ↔ AF"],
+  ["CustomerDSCR_",       "DSCR",                 "float",  "sync ↔ AF"],
+  ["_IncomePerYear",      "IncomePerYear (รายได้/ปี)","float","AF · optional"],
+  ["_Limit",              "Limit (วงเงิน)",       "float",  "AF · optional"],
+];
+const FIVEC = {
+  Condition:6, Capital:5, Capacity:8, Character:7, Collateral:3
+};
+const RISK_STYLE = {
+  "Red":    ["#C00000","#fff"], "Orange":["#FF7000","#fff"],
+  "Yellow": ["#FFD700","#000"], "Green": ["#70AD47","#fff"], "Green ":["#70AD47","#fff"],
+};
+const RESULT_STYLE = {
+  "Approve":               ["#C6EFCE","#276221"],
+  "Approve with condition":["#FFF2CC","#7f6000"],
+  "Reject":                ["#FFC7CE","#9C0006"],
+};
+
+/* ============================ helpers ============================ */
+const $ = s => document.querySelector(s);
+function el(tag, cls, html){ const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+function esc(s){ return String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function toast(msg){ const t=$("#toast"); t.textContent=msg||"คัดลอกแล้ว"; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1400); }
+async function copyText(txt){
+  try{ await navigator.clipboard.writeText(txt); toast("คัดลอกแล้ว ✓"); }
+  catch(e){
+    const ta=el("textarea"); ta.value=txt; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast("คัดลอกแล้ว ✓"); }catch(_){ toast("คัดลอกไม่สำเร็จ"); }
+    document.body.removeChild(ta);
+  }
+}
+function inputVal(inputs, name){ const i=inputs.find(x=>x.name===name); return i?i.value:undefined; }
+function afTable(inputs){
+  const af = inputs.find(x=>x.name==="AF_Quantitative_");
+  if(!af||!af.value) return null;
+  const cols = af.value[0].metadata.map(m=>Object.keys(m)[0]);
+  const row  = (af.value[1] && af.value[1].data && af.value[1].data[0]) || [];
+  return {af, cols, row};
+}
+
+/* ============================ tabs ============================ */
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  $("#panel-"+t.dataset.tab).classList.add("active");
+}));
+
+/* ============================ READER ============================ */
+function splitLog(text){
+  // returns {reqText, resText, url}
+  let reqText=null, resText=null, url="";
+  const reqMark = text.indexOf("***REQUEST***");
+  const resMark = text.indexOf("***RESPONSE***");
+  if(reqMark>=0 || resMark>=0){
+    if(reqMark>=0){
+      const after = text.slice(reqMark+13);
+      const end = after.indexOf("***RESPONSE***");
+      reqText = (end>=0? after.slice(0,end): after).trim();
+    }
+    if(resMark>=0){
+      let after = text.slice(resMark+14);
+      const um = after.match(/^\s*\[([^\]]+)\]/);
+      if(um){ url=um[1].trim(); after=after.slice(after.indexOf("]")+1); }
+      after = after.replace(/^[\s*]+/,"");   // strip ***** separator line
+      resText = after.trim();
+    }
+    return {reqText,resText,url};
+  }
+  return null;
+}
+function tryJSON(s){ if(!s)return null; try{return JSON.parse(s.trim());}catch(e){return null;} }
+
+function parseReader(){
+  const raw = $("#readerInput").value;
+  const errEl=$("#readerErr"); errEl.classList.remove("show");
+  $("#readerOut").innerHTML="";
+  if(!raw.trim()){ showErr("กรุณาวางข้อมูลก่อน"); return; }
+
+  let req=null, res=null, url="";
+  const split = splitLog(raw);
+  if(split){
+    req = tryJSON(split.reqText);
+    res = tryJSON(split.resText);
+    url = split.url;
+    if(!req && !res){ showErr("พบ marker แต่ parse JSON ไม่สำเร็จ — ตรวจว่า JSON สมบูรณ์"); return; }
+  } else {
+    const j = tryJSON(raw);
+    if(!j){ showErr("ไม่ใช่ JSON ที่ถูกต้อง และไม่พบ marker ***REQUEST***/***RESPONSE***"); return; }
+    if(j.inputs) req=j;
+    else if(j.outputs || j.moduleId) res=j;
+    else { showErr("JSON ไม่มี field \"inputs\" หรือ \"outputs\" — ไม่แน่ใจว่าเป็น request หรือ response"); return; }
+  }
+  renderReader(req,res,url);
+  function showErr(m){ errEl.textContent="⚠ "+m; errEl.classList.add("show"); }
+}
+
+function renderReader(req,res,url){
+  const out=$("#readerOut");
+  const grid=el("div","grid2");
+  if(req) grid.appendChild(renderRequest(req));
+  if(res) grid.appendChild(renderResponse(res,url));
+  out.appendChild(grid);
+}
+
+function renderRequest(req){
+  const inputs=req.inputs||[];
+  const card=el("div","card");
+  card.appendChild(el("h2",null,"📥 REQUEST — ข้อมูลที่ส่งเข้า"));
+  const seg=inputVal(inputs,"Segment_"), ca=inputVal(inputs,"ApplicationType_");
+  // identity + key inputs
+  const rows=[
+    ["RegisNo", inputVal(inputs,"RegisNo_")],
+    ["Segment", seg],
+    ["ApplicationType", ca],
+    ["Module (คำนวณ)", seg&&ca? `<span class="modchip">${moduleFor(seg,ca)}</span>`:"—"],
+    ["CusType", inputVal(inputs,"CusType_")],
+    ["NCB Score", inputVal(inputs,"NCBScore_")],
+    ["NCB Grade", inputVal(inputs,"NCBScoreGrade_")],
+    ["Installment", fmt(inputVal(inputs,"CustomerInstallment_"))],
+    ["Industry Type", inputVal(inputs,"CustomerIndustryType_")],
+    ["วัตถุประสงค์", inputVal(inputs,"CustomerObjCodeDetail_")],
+    ["Term (ปี)", inputVal(inputs,"CustomerTermYear_")],
+    ["ICR", inputVal(inputs,"CustomerICR_")],
+    ["DSCR", inputVal(inputs,"CustomerDSCR_")],
+  ];
+  card.appendChild(kvTable(rows));
+
+  // 5C
+  const groups={};
+  inputs.forEach(i=>{ const m=/^(Condition|Capital|Capacity|Character|Collateral)(\d+)_$/.exec(i.name); if(m){ (groups[m[1]]=groups[m[1]]||[]).push([m[2],i.value]); }});
+  if(Object.keys(groups).length){
+    card.appendChild(el("h2",null,"คะแนน 5C"));
+    const box=el("div","fivec");
+    Object.entries(groups).forEach(([g,arr])=>{
+      arr.sort((a,b)=>+a[0]-+b[0]);
+      const d=el("div","grp"); d.appendChild(el("h4",null,g));
+      arr.forEach(([n,v])=>{ const r=el("div","row"); r.appendChild(el("label",null,g+n)); r.appendChild(el("span",null,`<b>${esc(v)}</b>`)); d.appendChild(r); });
+      box.appendChild(d);
+    });
+    card.appendChild(box);
+  }
+
+  // AF_Quantitative
+  const t=afTable(inputs);
+  if(t){
+    card.appendChild(el("h2",null,"AF_Quantitative — งบการเงิน/กิจการ"));
+    const keyCols=["ApplNo","TransDate","RegisName","IncomePerYear","IncomeFromOperationPerYear","Limit","Installment","TermYear","ICR","DSCR","NCBTotalLimitAmt","NCBTotalOutstanding","AF_IndustryType"];
+    const rows2=keyCols.map(c=>{ const idx=t.cols.indexOf(c); return [c, idx>=0? fmt(t.row[idx]) : "—"]; });
+    card.appendChild(kvTable(rows2));
+    // full table
+    const det=el("details","raw"); det.appendChild(el("summary",null,`ดูทั้งหมด ${t.cols.length} คอลัมน์`));
+    const wrap=el("div","full-wrap"); const tb=el("table","full");
+    const thead=el("tr"); thead.appendChild(el("th",null,"#")); thead.appendChild(el("th",null,"คอลัมน์")); thead.appendChild(el("th",null,"ค่า"));
+    tb.appendChild(thead);
+    t.cols.forEach((c,i)=>{ const tr=el("tr"); tr.appendChild(el("td",null,i)); tr.appendChild(el("td",null,esc(c))); tr.appendChild(el("td",null,esc(fmt(t.row[i])))); tb.appendChild(tr); });
+    wrap.appendChild(tb); det.appendChild(wrap); card.appendChild(det);
+  }
+  return card;
+}
+
+function renderResponse(res,url){
+  const outs=res.outputs||[];
+  const get=n=>{ const o=outs.find(x=>x.name===n); return o?o.value:undefined; };
+  const card=el("div","card");
+  card.appendChild(el("h2",null,"📤 RESPONSE — ผลการประเมิน"));
+
+  // result badge
+  const rr=get("RiskResult");
+  if(rr!=null){
+    const st=RESULT_STYLE[rr]||["#eee","#333"];
+    const b=el("div"); b.style.marginBottom="12px";
+    b.innerHTML=`ผลสรุป: <span class="badge" style="background:${st[0]};color:${st[1]};font-size:15px">${esc(rr)}</span>`;
+    card.appendChild(b);
+  }
+  // scores
+  const sc=el("div","scorecards");
+  [["Quantitative","QuantitativeScore"],["Qualitative","QualitativeScore"],["Total","TotalScore"]].forEach(([l,k])=>{
+    const v=get(k); const box=el("div","scorebox");
+    box.innerHTML=`<div class="n">${v==null?"—":fmt(v)}</div><div class="l">${l}</div>`;
+    sc.appendChild(box);
+  });
+  card.appendChild(sc);
+
+  // risk dims
+  const dims=[["Financial","RiskFinancial"],["Non-Financial","RiskNonFinancial"],["Condition","RiskCondition"],["Capital","RiskCapital"],["Capacity","RiskCapacity"],["Character","RiskCharacter"],["Collateral","RiskCollateral"]];
+  const rg=el("div","riskgrid");
+  dims.forEach(([l,k])=>{ const v=get(k); if(v===undefined)return;
+    const st=RISK_STYLE[v]||["#eef1f5","#333"];
+    const box=el("div","riskbox");
+    box.innerHTML=`<div class="lbl">${l}</div><span class="risk-cell" style="background:${st[0]};color:${st[1]}">${esc(v||"—")}</span>`;
+    rg.appendChild(box);
+  });
+  card.appendChild(rg);
+
+  // flags & meta
+  const meta=[
+    ["Module ID", get("moduleId")||res.moduleId||"—"],
+    ["Invalid Factor", boolBadge(get("isInvalidFactor"))],
+    ["Exclude NCB Grade", boolBadge(get("isExcludeNCBScoreGrade"))],
+    ["Target Product", get("TargetProductAndGrade")||"—"],
+    ["Scoring Date", get("ScoringDate")||"—"],
+    ["Endpoint URL", url? `<span style="font-size:11px;word-break:break-all">${esc(url)}</span>`:"—"],
+  ];
+  card.appendChild(el("h2",null,"รายละเอียด"));
+  card.appendChild(kvTable(meta));
+
+  // AF_Score table
+  const afs=get("AF_Score");
+  if(afs && afs[0] && afs[0].metadata){
+    const cols=afs[0].metadata.map(m=>Object.keys(m)[0]);
+    const data=(afs[1]&&afs[1].data)||[];
+    card.appendChild(el("h2",null,"AF_Score"));
+    data.forEach((row,ri)=>{
+      if(row.length!==cols.length){
+        card.appendChild(el("div","note",`⚠ แถวที่ ${ri+1}: จำนวนค่า (${row.length}) ไม่ตรงกับคอลัมน์ (${cols.length}) — พบใน module <b>ascore_ca2_v1</b> (Micro CA2) ที่ค่าสีเกินมาหน้าสุด แสดงเป็นค่าดิบตามตำแหน่ง`));
+      }
+      const rows=cols.map((c,i)=>[c, esc(fmt(row[i]))]);
+      if(row.length>cols.length){ for(let i=cols.length;i<row.length;i++) rows.push([`(เกิน #${i})`, esc(fmt(row[i]))]); }
+      card.appendChild(kvTable(rows));
+    });
+  }
+  return card;
+}
+
+function boolBadge(v){
+  if(v==null) return "—";
+  const s=String(v).toUpperCase();
+  if(s==="TRUE")  return `<span class="badge" style="background:#FFC7CE;color:#9C0006">TRUE</span>`;
+  if(s==="FALSE") return `<span class="badge" style="background:#C6EFCE;color:#276221">FALSE</span>`;
+  return esc(v);
+}
+function kvTable(rows){
+  const t=el("table","kv");
+  rows.forEach(([k,v])=>{ const tr=el("tr"); tr.appendChild(el("td","k",esc(k))); const td=el("td","v"); td.innerHTML=(v==null||v==="")?"—":v; tr.appendChild(td); t.appendChild(tr); });
+  return t;
+}
+function fmt(v){
+  if(v==null) return "";
+  if(typeof v==="number"){ return Number.isInteger(v)? v.toLocaleString("en-US") : v.toLocaleString("en-US",{maximumFractionDigits:6}); }
+  return v;
+}
+
+$("#btnParse").addEventListener("click",parseReader);
+$("#btnClearReader").addEventListener("click",()=>{ $("#readerInput").value=""; $("#readerOut").innerHTML=""; $("#readerErr").classList.remove("show"); });
+$("#btnSample").addEventListener("click",()=>{ if(BASE_TEMPLATES){ $("#readerInput").value="***REQUEST***\n"+JSON.stringify(BASE_TEMPLATES["SME-L|CA2"],null,2); parseReader(); }});
+
+/* ============================ BUILDER ============================ */
+function initBuilder(){
+  const segSel=$("#bSegment");
+  SEGMENTS.forEach(s=>{ const o=el("option"); o.value=s.value; o.textContent=s.label; segSel.appendChild(o); });
+  segSel.addEventListener("change",onSegChange);
+  $("#bAppType").addEventListener("change",onComboChange);
+  buildKeyFields();
+  build5C();
+  onSegChange();
+  $("#btnBuild").addEventListener("click",buildPayload);
+  $("#btnCopyPayload").addEventListener("click",()=>{ const v=$("#bOutput").value; if(v.trim()) copyText(v); else toast("ยังไม่มี payload"); });
+  $("#btnCopyUrl").addEventListener("click",()=>copyText($("#bUrl").textContent));
+  $("#bMinify").addEventListener("change",()=>{ if($("#bOutput").value.trim()) buildPayload(); });
+}
+function onSegChange(){
+  const seg=$("#bSegment").value; const caSel=$("#bAppType");
+  const cur=caSel.value;
+  caSel.innerHTML="";
+  appTypesFor(seg).forEach(c=>{ const o=el("option"); o.value=c; o.textContent=c; caSel.appendChild(o); });
+  if(appTypesFor(seg).includes(cur)) caSel.value=cur;
+  onComboChange();
+}
+function onComboChange(){
+  const seg=$("#bSegment").value, ca=$("#bAppType").value;
+  $("#bModule").textContent=moduleFor(seg,ca);
+  $("#bUrl").textContent=urlFor(seg,ca);
+  $("#b5cCard").style.display = has5C(ca) ? "" : "none";
+  $("#bFlag").textContent = has5C(ca) ? "โหมด CA2 · มี 5C + Qualitative" : "โหมด CA1 · quantitative ล้วน (ไม่มี 5C)";
+  prefillFromTemplate();
+}
+function buildKeyFields(){
+  const box=$("#bKeyFields"); box.innerHTML="";
+  KEY_FIELDS.forEach(([name,label,type,hint])=>{
+    const f=el("div","field");
+    f.innerHTML=`<label>${label} ${hint?`<span class="hint">· ${hint}</span>`:""}</label>`;
+    const inp=el("input"); inp.id="kf_"+name; inp.dataset.type=type;
+    if(type==="int"||type==="float") inp.type="number";
+    f.appendChild(inp); box.appendChild(f);
+  });
+}
+function build5C(){
+  const box=$("#b5c"); box.innerHTML="";
+  Object.entries(FIVEC).forEach(([g,n])=>{
+    const d=el("div","grp"); d.appendChild(el("h4",null,g+` (×${n})`));
+    for(let i=1;i<=n;i++){ const r=el("div","row");
+      r.appendChild(el("label",null,g+i));
+      const inp=el("input"); inp.type="number"; inp.id="c5_"+g+i; r.appendChild(inp); d.appendChild(r);
+    }
+    box.appendChild(d);
+  });
+}
+function currentTemplate(){
+  const seg=$("#bSegment").value, ca=$("#bAppType").value;
+  const key=seg+"|"+ca;
+  return BASE_TEMPLATES && (BASE_TEMPLATES[key]||null);
+}
+function prefillFromTemplate(){
+  const tpl=currentTemplate(); if(!tpl) return;
+  const inputs=tpl.inputs;
+  const t=afTable(inputs);
+  const afGet=c=>{ if(!t)return undefined; const i=t.cols.indexOf(c); return i>=0? t.row[i]:undefined; };
+  KEY_FIELDS.forEach(([name])=>{
+    const inp=$("#kf_"+name); if(!inp) return;
+    let v;
+    if(name==="_ApplNo")            v=afGet("ApplNo");
+    else if(name==="_IncomePerYear")v=afGet("IncomePerYear");
+    else if(name==="_Limit")        v=afGet("Limit");
+    else                            v=inputVal(inputs,name);
+    inp.value = v==null? "" : v;
+  });
+  // 5C
+  Object.entries(FIVEC).forEach(([g,n])=>{ for(let i=1;i<=n;i++){ const inp=$("#c5_"+g+i); if(inp){ const v=inputVal(inputs,g+i+"_"); inp.value=v==null?"":v; } }});
+}
+function coerce(type,val){
+  if(val===""||val==null) return "";
+  if(type==="int")   { const n=parseInt(val,10);   return isNaN(n)?val:n; }
+  if(type==="float") { const n=parseFloat(val);     return isNaN(n)?val:n; }
+  return val;
+}
+function buildPayload(){
+  const tpl=currentTemplate();
+  if(!tpl){ toast("ไม่มี template สำหรับเคสนี้"); return; }
+  const seg=$("#bSegment").value, ca=$("#bAppType").value;
+  const payload=JSON.parse(JSON.stringify(tpl)); // deep clone
+  const inputs=payload.inputs;
+  const setInput=(name,val)=>{ const i=inputs.find(x=>x.name===name); if(i) i.value=val; };
+
+  // segment + apptype
+  setInput("Segment_",seg); setInput("ApplicationType_",ca);
+
+  // AF row + col map
+  const t=afTable(inputs);
+  const afSet=(col,val)=>{ if(!t)return; const idx=t.cols.indexOf(col); if(idx>=0) t.row[idx]=val; };
+
+  // key fields
+  KEY_FIELDS.forEach(([name,label,type])=>{
+    const inp=$("#kf_"+name); if(!inp) return;
+    const raw=inp.value;
+    if(name==="_ApplNo"){ if(raw!=="") afSet("ApplNo",raw); return; }
+    if(name==="_IncomePerYear"){ if(raw!=="") afSet("IncomePerYear",coerce("float",raw)); return; }
+    if(name==="_Limit"){ if(raw!=="") afSet("Limit",coerce("float",raw)); return; }
+    const val=coerce(type,raw);
+    setInput(name,val);
+    // auto-sync to AF column if mapped
+    if(SYNC_MAP[name]!==undefined && raw!=="") afSet(SYNC_MAP[name], val);
+  });
+
+  // 5C (only when present in template)
+  if(has5C(ca)){
+    Object.entries(FIVEC).forEach(([g,n])=>{ for(let i=1;i<=n;i++){ const inp=$("#c5_"+g+i); if(!inp)return; const raw=inp.value; if(raw!=="") setInput(g+i+"_",coerce("int",raw)); }});
+  }
+
+  const minify=$("#bMinify").checked;
+  const txt=JSON.stringify(payload, null, minify?0:2);
+  $("#bOutput").value=txt;
+  $("#bSize").textContent=`${(new Blob([txt]).size/1024).toFixed(1)} KB · module ${moduleFor(seg,ca)}`;
+}
+
+initBuilder();
+</script>
+</body>
+</html>
