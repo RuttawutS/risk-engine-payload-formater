@@ -1,33 +1,24 @@
 # CRA Payload Tool
 
-Static web (ไฟล์ HTML เดียวจบ) สำหรับ CRA credit scoring payload ของ SME Bank
+Static web (HTML ไฟล์เดียว) สำหรับ CRA credit-scoring payload ของ SME Bank
+2 โหมด: **อ่าน payload** ให้เข้าใจง่าย และ **สร้าง payload** ที่ยิงได้จริงจากฟอร์ม + ปุ่มคัดลอก
 
-## ใช้งาน
-เปิด **`cra_payload_tool.html`** ด้วย double-click (ไม่ต้อง server / build) มี 2 โหมด:
+## เปิดใช้
+เปิด `index.html` ด้วยเบราว์เซอร์ (double-click) — ไม่ต้อง build/server
 
-### 📖 อ่าน payload
-วางได้ทั้ง: ไฟล์ `.log` เต็ม (มี `***REQUEST***` / `***RESPONSE***`), request JSON เดี่ยว, หรือ response JSON เดี่ยว
-→ ระบบตรวจชนิดเอง แล้วแสดงเป็นหน้าอ่านง่าย: ข้อมูลลูกค้า, 5C, งบ AF_Quantitative (ย่อ+เต็ม), คะแนน, และสี risk 7 มิติ
+## Deploy บน GitHub Pages
+1. push โฟลเดอร์นี้ขึ้น repo
+2. Settings → Pages → Source = **Deploy from a branch** → `main` / root (`/`)
+   (หรือใช้ GitHub Actions workflow ใน `.github/workflows/deploy-pages.yml` ที่ให้มา)
+3. เปิด URL ที่ Pages แจ้ง เช่น `https://<org-or-user>.github.io/<repo>/`
 
-### 🛠️ สร้าง payload
-เลือก Segment + ApplicationType → tool คำนวณ moduleId + URL ให้ → กรอกฟิลด์สำคัญ (ที่เหลือใช้ default จาก payload จริง) → กด **สร้าง payload** → ได้ JSON ที่ยิงได้จริง 100% พร้อมปุ่มคัดลอก
-- ค่าซ้ำ (ICR/DSCR/Installment/Term/Industry/ObjCode) **sync ลงทั้ง top-level และแถว AF อัตโนมัติ**
-- CA1 = quant ล้วน (ไม่มี 5C) · CA2 = มี 5C
-
-> หมายเหตุ: tool สร้าง JSON ให้คัดลอกไปยิงเอง (Postman/curl) — ไม่ยิง HTTP เองเพื่อเลี่ยง CORS/auth (ดู `docs/ADR.md`)
+> ⚠️ **ข้อมูล**: `index.html` ในโฟลเดอร์นี้เป็น **dummy-data** (ค่าเริ่มต้นว่าง/ศูนย์) จึงปลอดภัยแม้ repo/Pages เป็นสาธารณะ
+> เวอร์ชันที่ฝัง payload ตัวอย่างจริง (`cra_payload_tool_INTERNAL.html`) **ห้ามขึ้น public** — ใช้ภายใน/GitHub Enterprise เท่านั้น
 
 ## โครงสร้าง
 ```
-cra_payload_tool.html   ← ไฟล์ส่งมอบ (self-contained, ฝัง base template 7 แบบ)
-_shell.html             ← source (มี placeholder ยังไม่ฝัง template)
-docs/GLOSSARY.md        ← คำศัพท์ + ตาราง routing
-docs/ADR.md             ← บันทึกการตัดสินใจออกแบบ
-build/                  ← re-build ได้: python extract_templates.py && python build_tool.py
-```
-
-## Re-build (เมื่อแก้ _shell.html หรืออยากอัปเดต template จาก log)
-```bash
-cd cra_tool/build
-python extract_templates.py   # ดึง template จาก log -> templates.json
-python build_tool.py          # inject -> ../cra_payload_tool.html
+index.html      ← ตัวเครื่องมือ (dummy-data, self-contained)
+_shell.html     ← source (มี placeholder ยังไม่ฝัง template)
+docs/           ← GLOSSARY.md, ADR.md
+.github/workflows/deploy-pages.yml  ← auto-deploy Pages
 ```

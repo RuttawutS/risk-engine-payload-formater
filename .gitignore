@@ -1,0 +1,7 @@
+# ห้ามให้ข้อมูลดิบธนาคารหลุดเข้า repo
+*.log
+*.xlsx
+templates.json
+templates.dummy.json
+cra_payload_tool_INTERNAL.html
+__pycache__/
